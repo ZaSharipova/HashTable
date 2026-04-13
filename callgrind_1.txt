@@ -1,0 +1,206 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.1568977' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 1413556683
+Trigger: Program termination
+Profiled target:  ./result (PID 1568977, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                     
+--------------------------------------------------------------------------------
+8,487,525,415 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                      file:function
+--------------------------------------------------------------------------------
+2,211,900,000 (26.06%)  ???:xcrc32(unsigned char const*, int, unsigned int) [/root/AsmProjects/HashTable/result]
+1,412,160,996 (16.64%)  ./malloc/./malloc/malloc.c:_int_malloc [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  607,060,335 ( 7.15%)  ./libio/./libio/iogetline.c:_IO_getline_info [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  565,600,000 ( 6.66%)  ./libio/./libio/iofgets.c:fgets [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  462,236,655 ( 5.45%)  ???:ContainsChain(ChainHashTable*, char const*, unsigned int (*)(char const*, unsigned long)) [/root/AsmProjects/HashTable/result]
+  448,817,004 ( 5.29%)  ./malloc/./malloc/malloc.c:malloc [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  363,600,088 ( 4.28%)  ???:ReadString(char const*, int) [/root/AsmProjects/HashTable/result]
+  291,376,845 ( 3.43%)  ./string/../sysdeps/x86_64/multiarch/strcmp-avx2.S:__strcmp_avx2 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  248,106,490 ( 2.92%)  ./string/../sysdeps/x86_64/multiarch/strcspn-sse4.c:__strcspn_sse42 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  196,961,564 ( 2.32%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_chk_avx_unaligned_erms [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  193,253,502 ( 2.28%)  ./string/../sysdeps/x86_64/multiarch/memchr-avx2.S:__memchr_avx2 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  191,900,000 ( 2.26%)  ???:CountHashcrc32(char const*, unsigned long) [/root/AsmProjects/HashTable/result]
+  191,400,043 ( 2.26%)  ???:MeasureChainSearch(char**, char**, int*) [/root/AsmProjects/HashTable/result]
+  161,600,068 ( 1.90%)  ./string/./string/strdup.c:strdup [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  141,400,014 ( 1.67%)  ./string/../sysdeps/x86_64/multiarch/strlen-avx2.S:__strlen_avx2 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  126,754,281 ( 1.49%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  111,100,000 ( 1.31%)  ./libio/./libio/libioP.h:fgets
+   79,567,788 ( 0.94%)  /usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h:__strcspn_sse42
+   60,600,000 ( 0.71%)  /usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h:__strcspn_sse42
+   50,611,250 ( 0.60%)  ./libio/../string/bits/string_fortified.h:_IO_getline_info
+   40,800,012 ( 0.48%)  ./malloc/./malloc/malloc.c:alloc_perturb [/usr/lib/x86_64-linux-gnu/libc.so.6]
+   40,400,000 ( 0.48%)  ./string/../string/bits/string_fortified.h:strdup
+   30,300,000 ( 0.36%)  ./libio/./libio/iogetline.c:_IO_getline [/usr/lib/x86_64-linux-gnu/libc.so.6]
+   25,057,382 ( 0.30%)  ???:0x0000000000109200 [???]
+   20,256,878 ( 0.24%)  ???:0x00000000049636b0 [???]
+   20,256,862 ( 0.24%)  ???:0x0000000004963480 [???]
+   20,200,010 ( 0.24%)  ???:0x00000000049633f0 [???]
+   20,200,008 ( 0.24%)  ./malloc/./malloc/arena.c:malloc
+   20,200,002 ( 0.24%)  ???:0x0000000004963500 [???]
+   20,200,000 ( 0.24%)  ???:0x00000000001091c0 [???]
+   20,200,000 ( 0.24%)  ???:0x00000000001091e0 [???]
+   20,200,000 ( 0.24%)  ???:0x0000000000109240 [???]
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h
+--------------------------------------------------------------------------------
+Ir                  
+
+-- line 626 ----------------------------------------
+         .             return (__m128i) __builtin_ia32_pcmpistrm128 ((__v16qi)__X,
+         .           						(__v16qi)__Y,
+         .           						__M);
+         .           }
+         .           
+         .           extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpistri (__m128i __X, __m128i __Y, const int __M)
+         .           {
+13,261,298 ( 0.16%)    return __builtin_ia32_pcmpistri128 ((__v16qi)__X,
+         .           				      (__v16qi)__Y,
+         .           				      __M);
+         .           }
+         .           
+         .           extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpestrm (__m128i __X, int __LX, __m128i __Y, int __LY, const int __M)
+         .           {
+         .             return (__m128i) __builtin_ia32_pcmpestrm128 ((__v16qi)__X, __LX,
+-- line 642 ----------------------------------------
+-- line 679 ----------------------------------------
+         .             return __builtin_ia32_pcmpistria128 ((__v16qi)__X,
+         .           				       (__v16qi)__Y,
+         .           				       __M);
+         .           }
+         .           
+         .           extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpistrc (__m128i __X, __m128i __Y, const int __M)
+         .           {
+39,783,894 ( 0.47%)    return __builtin_ia32_pcmpistric128 ((__v16qi)__X,
+         .           				       (__v16qi)__Y,
+         .           				       __M);
+         .           }
+         .           
+         .           extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpistro (__m128i __X, __m128i __Y, const int __M)
+         .           {
+         .             return __builtin_ia32_pcmpistrio128 ((__v16qi)__X,
+-- line 695 ----------------------------------------
+-- line 703 ----------------------------------------
+         .             return __builtin_ia32_pcmpistris128 ((__v16qi)__X,
+         .           				       (__v16qi)__Y,
+         .           				       __M);
+         .           }
+         .           
+         .           extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpistrz (__m128i __X, __m128i __Y, const int __M)
+         .           {
+26,522,596 ( 0.31%)    return __builtin_ia32_pcmpistriz128 ((__v16qi)__X,
+         .           				       (__v16qi)__Y,
+         .           				       __M);
+         .           }
+         .           
+         .           extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpestra (__m128i __X, int __LX, __m128i __Y, int __LY, const int __M)
+         .           {
+         .             return __builtin_ia32_pcmpestria128 ((__v16qi)__X, __LX,
+-- line 719 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h
+--------------------------------------------------------------------------------
+Ir                  
+
+-- line 698 ----------------------------------------
+         .           _mm_load_si128 (__m128i const *__P)
+         .           {
+         .             return *__P;
+         .           }
+         .           
+         .           extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_loadu_si128 (__m128i_u const *__P)
+         .           {
+20,200,000 ( 0.24%)    return *__P;
+         .           }
+         .           
+         .           extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_loadl_epi64 (__m128i_u const *__P)
+         .           {
+         .             return _mm_set_epi64 ((__m64)0LL, *(__m64_u *)__P);
+         .           }
+         .           
+-- line 714 ----------------------------------------
+-- line 1333 ----------------------------------------
+         .           _mm_xor_si128 (__m128i __A, __m128i __B)
+         .           {
+         .             return (__m128i) ((__v2du)__A ^ (__v2du)__B);
+         .           }
+         .           
+         .           extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpeq_epi8 (__m128i __A, __m128i __B)
+         .           {
+30,300,000 ( 0.36%)    return (__m128i) ((__v16qi)__A == (__v16qi)__B);
+         .           }
+         .           
+         .           extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_cmpeq_epi16 (__m128i __A, __m128i __B)
+         .           {
+         .             return (__m128i) ((__v8hi)__A == (__v8hi)__B);
+         .           }
+         .           
+-- line 1349 ----------------------------------------
+-- line 1431 ----------------------------------------
+         .           _mm_min_epu8 (__m128i __A, __m128i __B)
+         .           {
+         .             return (__m128i)__builtin_ia32_pminub128 ((__v16qi)__A, (__v16qi)__B);
+         .           }
+         .           
+         .           extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_movemask_epi8 (__m128i __A)
+         .           {
+10,100,000 ( 0.12%)    return __builtin_ia32_pmovmskb128 ((__v16qi)__A);
+         .           }
+         .           
+         .           extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         .           _mm_mulhi_epu16 (__m128i __A, __m128i __B)
+         .           {
+         .             return (__m128i)__builtin_ia32_pmulhuw128 ((__v8hi)__A, (__v8hi)__B);
+         .           }
+         .           
+-- line 1447 ----------------------------------------
+
+--------------------------------------------------------------------------------
+The following files chosen for auto-annotation could not be found:
+--------------------------------------------------------------------------------
+  ./libio/../string/bits/string_fortified.h
+  ./libio/./libio/iofgets.c
+  ./libio/./libio/iogetline.c
+  ./libio/./libio/libioP.h
+  ./malloc/./malloc/arena.c
+  ./malloc/./malloc/malloc.c
+  ./string/../string/bits/string_fortified.h
+  ./string/../sysdeps/x86_64/multiarch/memchr-avx2.S
+  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S
+  ./string/../sysdeps/x86_64/multiarch/strcmp-avx2.S
+  ./string/../sysdeps/x86_64/multiarch/strcspn-sse4.c
+  ./string/../sysdeps/x86_64/multiarch/strlen-avx2.S
+  ./string/./string/strdup.c
+
+--------------------------------------------------------------------------------
+Ir                   
+--------------------------------------------------------------------------------
+140,167,788 ( 1.65%)  events annotated
+
