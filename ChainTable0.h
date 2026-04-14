@@ -10,15 +10,11 @@ typedef struct Node {
     struct Node* next;
 } Node;
 
-typedef struct ChainHashTable {
+typedef struct {
     Node** table;
     size_t capacity;
     size_t size;
     float load_factor;
-
-    Node* node_pool;
-    size_t pool_capacity;
-    size_t pool_used;
 } ChainHashTable;
 
 ChainHashTable* CreateChainTable(size_t capacity, float load_factor);

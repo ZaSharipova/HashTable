@@ -1,0 +1,53 @@
+#include <stdio.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#define MAX_WORD_LEN 32
+
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <input> <output>\n", argv[0]);
+        return 1;
+    }
+
+    FILE* in = fopen(argv[1], "r");
+    if (!in) {
+        perror("Error opening input");
+        return 1;
+    }
+
+    FILE* out = fopen(argv[2], "a");
+    if (!out) {
+        perror("Error opening output");
+        fclose(in);
+        return 1;
+    }
+
+    char word[MAX_WORD_LEN + 1] = {};
+    int len = 0;
+    int c = 0;
+
+    while ((c = fgetc(in)) != EOF) {
+        if (isalpha(c)) {
+            if (len < MAX_WORD_LEN)
+                word[len++] = (char)c;
+        } else {
+            if (len > 0) {
+                word[len] = '\0';
+                fprintf(out, "%s\n", word);
+                len = 0;
+            }
+        }
+    }
+
+    if (len > 0) {
+        word[len] = '\0';
+        fprintf(out, "%s\n", word);
+    }
+
+    fclose(in);
+    fclose(out);
+    return 0;
+}

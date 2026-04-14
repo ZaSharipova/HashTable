@@ -6,8 +6,6 @@
 #include "CommonFunctions.h"
 #include "Config.h"
 
-#define NUMBER_KEYS 100000
-#define NUMBER_QUERIES 10000000
 #define MIN_LEN 5
 #define MAX_LEN 20
 
@@ -20,15 +18,17 @@ int main(void) {
     FILE* file = fopen("data/tests_queries.txt", "w");
     if (!file) {
         perror(ERROR_FILE);
+        free(keys);
         return 1;
     }
 
     for (int i = 0; i < NUMBER_QUERIES; i++) {
         if (rand() % 2 == 0) {
             fprintf(file, "%s\n", keys[rand() % NUMBER_KEYS]);
+
         } else {
-            int length = MIN_LEN + rand() % (MAX_LEN - MIN_LEN + 1);
-            for (int j = 0; j < length; j++) {
+            int len = MIN_LEN + rand() % (MAX_LEN - MIN_LEN + 1);
+            for (int j = 0; j < len; j++) {
                 char c = rand() % 2 == 0 ? 'a' + rand() % 26 : 'A' + rand() % 26;
                 fputc(c, file);
             }
@@ -39,9 +39,9 @@ int main(void) {
 
     fclose(file);
 
-    for (int i = 0; i < NUMBER_KEYS; i++) {
-        free(keys[i]);
-    }
+    // for (int i = 0; i < NUMBER_KEYS; i++) {
+    //     free(keys[i]);
+    // }
     
     free(keys);
 

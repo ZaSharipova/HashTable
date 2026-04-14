@@ -1,0 +1,44 @@
+time: 5817.772949 ms
+ticks: 13963254867
+sink = 14997906
+
+--------------------------------------------------------------------------------
+Profile data file 'use/callgrind_raw_mmap+asm_in+hash.txt' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 2368201950
+Trigger: Program termination
+Profiled target:  ./bin/result (PID 3134341, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                     
+--------------------------------------------------------------------------------
+6,076,767,008 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                      file:function
+--------------------------------------------------------------------------------
+1,410,242,057 (23.21%)  ???:CountHashcrc32(char const*, unsigned long) [/root/AsmProjects/HashTable/bin/result]
+1,286,461,328 (21.17%)  ???:ReadString(char const*, int) [/root/AsmProjects/HashTable/bin/result]
+1,104,543,294 (18.18%)  ???:ContainsChain(ChainHashTable*, char const*, unsigned int (*)(char const*, unsigned long)) [/root/AsmProjects/HashTable/bin/result]
+  992,000,048 (16.32%)  ./string/../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S:__memset_chk_avx2_unaligned_erms [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  591,212,112 ( 9.73%)  ./string/../sysdeps/x86_64/multiarch/memchr-avx2.S:__memchr_avx2 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  341,000,000 ( 5.61%)  ???:0x0000000000002470 [/root/AsmProjects/HashTable/bin/result]
+  277,000,090 ( 4.56%)  ???:main [/root/AsmProjects/HashTable/bin/result]
+   74,110,189 ( 1.22%)  ???:InsertChain(ChainHashTable*, char const*, unsigned int (*)(char const*, unsigned long)) [/root/AsmProjects/HashTable/bin/result]
+
+--------------------------------------------------------------------------------
+The following files chosen for auto-annotation could not be found:
+--------------------------------------------------------------------------------
+  ./string/../sysdeps/x86_64/multiarch/memchr-avx2.S
+  ./string/../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+

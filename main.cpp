@@ -2,16 +2,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+#include <immintrin.h>
 
 #include "HashFunctions.h"
 #include "ChainTable.h"
 #include "CommonFunctions.h"
 #include "Config.h"
 
-#define NUMBER_KEYS 100000
-#define NUMBER_QUERIES 10000000
-
-static float MeasureChainSearch(char** keys, char** queries, int* sink);
+static float MeasureChainSearch(char** keys, char** queries, int* sink, unsigned long long *ticks);
 
 int main(void) {
     srand(SEED);
@@ -26,23 +24,22 @@ int main(void) {
     }
 
     volatile int sink = 0;
-    // float methods[4] = {};
-    // methods[0] = MeasureChainSearch(keys, queries, (int *)&sink);
-    printf("time: %f ms\n", MeasureChainSearch(keys, queries, (int *)&sink));
+    unsigned long long ticks = 12;
+    float time = MeasureChainSearch(keys, queries, (int *)&sink, &ticks);
 
+    printf("time: %f ms\nticks: %llu\n", time, ticks);
     printf("sink = %d\n\n", sink);
-    // PrintResults(methods, names);
-    // int result = SaveResults(methods, names);
 
     free(keys);
     free(queries);
     return 0;
 }
 
-static float MeasureChainSearch(char** keys, char** queries, int* sink) {
+static float MeasureChainSearch(char** keys, char** queries, int* sink, unsigned long long *ticks) {
     assert(keys);
     assert(queries);
     assert(sink);
+    assert(ticks);
 
     ChainHashTable* chain = CreateChainTable(NUMBER_KEYS, 10.0f);
     if (!chain) return -1;
@@ -51,11 +48,14 @@ static float MeasureChainSearch(char** keys, char** queries, int* sink) {
         InsertChain(chain, keys[i], CountHashcrc32);
     }
 
+    unsigned long long ticks_start = __rdtsc();
     clock_t time_start = clock();
     for (int i = 0; i < NUMBER_QUERIES; i++) {
         *sink += ContainsChain(chain, queries[i], CountHashcrc32);
     }
     clock_t time_end = clock();
+    unsigned long long ticks_end = __rdtsc();
+    *ticks = ticks_end - ticks_start;
 
     DestroyChainTable(chain);
     return GetTimeInMSec(time_start, time_end);

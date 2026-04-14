@@ -1,4 +1,4 @@
-#include "ChainTable.h"
+#include "ChainTable0.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -6,64 +6,6 @@
 
 #include "HashFunctions.h"
 #include "CommonFunctions.h"
-#include <immintrin.h>
-
-static inline int simd_strcmp_32(const char* a, const char* b) {
-    __m256i va = _mm256_load_si256((const __m256i*)a);
-    __m256i vb = _mm256_load_si256((const __m256i*)b);
-    __m256i cmp = _mm256_cmpeq_epi8(va, vb);
-    
-    return _mm256_movemask_epi8(cmp) == (int)0xFFFFFFFF;
-}
-
-ChainHashTable* CreateChainTable(size_t capacity, float load_factor) {
-    ChainHashTable* hash_table = (ChainHashTable*) calloc (1, sizeof(ChainHashTable));
-    CHECK_NULL(hash_table, ERROR_ARR, NULL);
-
-    hash_table->table = (Node**) calloc (capacity, sizeof(Node*));
-    if (!hash_table->table) {
-        perror(ERROR_ARR);
-        free(hash_table);
-        return NULL;
-    }
-
-    hash_table->pool_capacity = capacity;
-    hash_table->node_pool = (Node*) calloc (hash_table->pool_capacity, sizeof(Node));
-    if (!hash_table->node_pool) {
-        perror(ERROR_ARR);
-        free(hash_table->table);
-        free(hash_table);
-        return NULL;
-    }
-    hash_table->pool_used = 0;
-
-    hash_table->capacity = capacity;
-    hash_table->size = 0;
-    hash_table->load_factor = load_factor;
-
-    return hash_table;
-}
-
-static Node* AllocNode(ChainHashTable* hash_table) {
-    assert(hash_table);
-
-    if (hash_table->pool_used >= hash_table->pool_capacity) {
-        size_t new_capacity = hash_table->pool_capacity * 2;
-
-        Node* new_pool = (Node*) realloc (hash_table->node_pool, new_capacity * sizeof(Node));
-        CHECK_NULL(new_pool, "Error realloc.\n", NULL);
-
-        hash_table->node_pool = new_pool;
-        hash_table->pool_capacity = new_capacity;
-    }
-
-    Node* node = &hash_table->node_pool[hash_table->pool_used++];
-    node->next = NULL;
-    node->value = NULL;
-
-    return node;
-}
-
 
 static void RehashChain(ChainHashTable* hash_table, HashFunc Hash) {
     assert(hash_table);
@@ -92,10 +34,37 @@ static void RehashChain(ChainHashTable* hash_table, HashFunc Hash) {
     hash_table->capacity = new_capacity;
 }
 
+ChainHashTable* CreateChainTable(size_t capacity, float load_factor) {
+    ChainHashTable* hash_table = (ChainHashTable *) calloc (1, sizeof(ChainHashTable));
+    CHECK_NULL(hash_table, ERROR_ARR, NULL);
+
+    hash_table->table = (Node **) calloc (capacity, sizeof(Node*));
+    if (!hash_table->table) {
+        perror(ERROR_ARR);
+        free(hash_table);
+        return NULL;
+    }
+
+    hash_table->capacity = capacity;
+    hash_table->size = 0;
+    hash_table->load_factor = load_factor;
+
+    return hash_table;
+}
+
 void DestroyChainTable(ChainHashTable* hash_table) {
     assert(hash_table);
 
-    free(hash_table->node_pool);
+    for (size_t i = 0; i < hash_table->capacity; i++) {
+        Node* cur = hash_table->table[i];
+
+        while (cur) {
+            Node* next = cur->next;
+            free(cur);
+            cur = next;
+        }
+    }
+
     free(hash_table->table);
     free(hash_table);
 }
@@ -112,11 +81,14 @@ void InsertChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
     Node* cur = hash_table->table[hash];
 
     while (cur) {
-        if (simd_strcmp_32(cur->value, value)) return;
+        if (strcmp(cur->value, value) == 0) {
+            return;
+        }
+
         cur = cur->next;
     }
 
-    Node* node = (Node *) AllocNode (hash_table);
+    Node* node = (Node *) calloc (1, sizeof(Node));
     CHECK_NULL_VOID(node, ERROR_ARR);
 
     node->value = value;
@@ -136,7 +108,7 @@ void DeleteChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
     Node* prev = NULL;
 
     while (cur) {
-        if (simd_strcmp_32(cur->value, value)) {
+        if (cur->value == value) {
             if (prev) {
                 prev->next = cur->next;
             } else {
@@ -161,7 +133,7 @@ int ContainsChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) 
     Node* cur = hash_table->table[hash];
 
     while (cur) {
-        if (simd_strcmp_32(cur->value, value)) {
+        if (strcmp(cur->value, value) == 0)  {
             return 1;
         }
 
