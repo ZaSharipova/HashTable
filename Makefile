@@ -5,7 +5,7 @@ BIN_DIR = bin
 GEN_DIR = data
 USE_DIR = use
 
-COMMON_SRCS = main.cpp HashFunctions.cpp CommonFunctions.cpp ChainTable.cpp
+COMMON_SRCS = main.cpp HashFunctions.cpp CommonFunctions.cpp ChainTable0.cpp
 COMMON_OBJS = $(patsubst %.c, $(OBJ_DIR)/%.o, $(COMMON_SRCS)) MyStrlen.o
 
 .PHONY: all GenerateString GenerateQueries result

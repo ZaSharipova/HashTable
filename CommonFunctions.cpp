@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <immintrin.h>
 
 #include "Config.h"
 
@@ -51,6 +52,11 @@ char** ReadString(const char* filename, int number_of_elements) {
     }
 
     memset(merger, 0, (size_t)number_of_elements * 32);
+    // __m256i zero = _mm256_setzero_si256(); ----------------------> поняла, что это бессмысленно
+
+    // for (int i = 0; i < number_of_elements; i++) {
+    //     _mm256_storeu_si256((__m256i*)(merger) + i, zero);
+    // }
 
     char* cursor = data;
     char* end = data + st.st_size;
