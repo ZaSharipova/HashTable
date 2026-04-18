@@ -7,10 +7,6 @@
 typedef unsigned int (*HashFunc)(const char *, size_t);
 typedef size_t (*ProbeFunc)(size_t hash, size_t attempt, size_t capacity);
 
-size_t TryLinear(size_t hash, size_t attempt, size_t capacity);
-size_t TryQuadratic(size_t hash, size_t attempt, size_t capacity);
-size_t TryDouble(size_t hash, size_t attempt, size_t capacity);
-
 unsigned int CountHashRemainder(unsigned int x, size_t capacity);
 
 unsigned int CountHashBits(unsigned int x, size_t capacity);

@@ -38,11 +38,6 @@ int main(void) {
     }
 
     fclose(file);
-
-    // for (int i = 0; i < NUMBER_KEYS; i++) {
-    //     free(keys[i]);
-    // }
-    
     free(keys);
 
     return 0;

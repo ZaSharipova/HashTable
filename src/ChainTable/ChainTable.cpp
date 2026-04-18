@@ -1,4 +1,4 @@
-#include "ChainTable0.h"
+#include "ChainTable.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -7,7 +7,7 @@
 #include "HashFunctions.h"
 #include "CommonFunctions.h"
 
-static void RehashChain(ChainHashTable* hash_table, HashFunc Hash) {
+static void Rehash(HashTable* hash_table, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
 
@@ -34,8 +34,8 @@ static void RehashChain(ChainHashTable* hash_table, HashFunc Hash) {
     hash_table->capacity = new_capacity;
 }
 
-ChainHashTable* CreateChainTable(size_t capacity, float load_factor) {
-    ChainHashTable* hash_table = (ChainHashTable *) calloc (1, sizeof(ChainHashTable));
+HashTable* CreateTable(size_t capacity, float load_factor) {
+    HashTable* hash_table = (HashTable *) calloc (1, sizeof(HashTable));
     CHECK_NULL(hash_table, ERROR_ARR, NULL);
 
     hash_table->table = (Node **) calloc (capacity, sizeof(Node*));
@@ -52,7 +52,7 @@ ChainHashTable* CreateChainTable(size_t capacity, float load_factor) {
     return hash_table;
 }
 
-void DestroyChainTable(ChainHashTable* hash_table) {
+void DestroyTable(HashTable* hash_table) {
     assert(hash_table);
 
     for (size_t i = 0; i < hash_table->capacity; i++) {
@@ -69,12 +69,13 @@ void DestroyChainTable(ChainHashTable* hash_table) {
     free(hash_table);
 }
 
-void InsertChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
+void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
+    assert(value);
 
     if ((double)hash_table->size / hash_table->capacity > hash_table->load_factor) {
-        RehashChain(hash_table, Hash);
+        Rehash(hash_table, Hash);
     }
 
     unsigned int hash = Hash(value, hash_table->capacity);
@@ -98,9 +99,10 @@ void InsertChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
     hash_table->size++;
 }
 
-void DeleteChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
+void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
+    assert(value);
 
     unsigned int hash = Hash(value, hash_table->capacity);
 
@@ -125,9 +127,10 @@ void DeleteChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
     }
 }
 
-int ContainsChain(ChainHashTable* hash_table, const char* value, HashFunc Hash) {
+int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
+    assert(value);
 
     unsigned int hash = Hash(value, hash_table->capacity);
     Node* cur = hash_table->table[hash];

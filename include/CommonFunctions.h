@@ -5,10 +5,7 @@
 #include <time.h>
 
 double GetTimeInMSec(clock_t start, clock_t end);
-float GetVariance(int* buckets, int n);
 char** ReadString(const char* filename, int number_of_elements);
-// int* GenerateUniqueKeys(int n);
-char** GenerateQueries(char** keys, int n, int count);
 
 #define CHECK_NULL(ptr, message, ret) \
     if (!(ptr)) {                     \

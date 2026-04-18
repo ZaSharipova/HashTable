@@ -7,7 +7,6 @@
 #include <math.h>
 
 #include "crc32.h"
-extern "C" size_t my_strlen(const char *stroke);
 
 unsigned int CountHashRemainder(unsigned int x, size_t capacity) {
     return ((unsigned int)x) % capacity;
@@ -106,55 +105,8 @@ unsigned int CountHashStrokePolinomial(const char* stroke, size_t capacity) {
     return result % capacity;
 }
 
-// unsigned int CountHashcrc32(const char* stroke, size_t capacity) {
-//     assert(stroke);
-
-//     return xcrc32((const unsigned char *)stroke, strlen(stroke), 0) % capacity;
-// }
-
-#include <immintrin.h>
-
-// unsigned int CountHashcrc32(const char* stroke, size_t capacity) {
-//     assert(stroke);
-
-//     unsigned int hash = 0xFFFFFFFF;
-//     while (*stroke) {
-//         hash = _mm_crc32_u8(hash, (unsigned char)*stroke);
-//         stroke++;
-//     }
-
-//     return hash % capacity;
-// }
-
 unsigned int CountHashcrc32(const char* stroke, size_t capacity) {
     assert(stroke);
 
-    unsigned long long hash = 0xFFFFFFFF;
-    size_t len = strlen(stroke);
-    size_t i = 0;
-
-    for (; i + 8 <= len; i += 8) {
-        unsigned long long buf = *(const unsigned long long*)(stroke + i);
-        hash = _mm_crc32_u64(hash, buf);
-    }
-
-    for (; i < len; i++) {
-        hash = _mm_crc32_u8((unsigned int)hash, (unsigned char)stroke[i]);
-    }
-
-    return (unsigned int)hash % capacity;
-}
-
-
-size_t TryLinear(size_t hash, size_t attempt, size_t capacity) {
-    return (hash + attempt) % capacity;
-}
-
-size_t TryQuadratic(size_t hash, size_t attempt, size_t capacity) {
-    return (hash + attempt * attempt) % capacity;
-}
-
-size_t TryDouble(size_t hash, size_t attempt, size_t capacity) {
-    size_t hash2 = 1 + CountHashKnuth(hash, capacity - 1);
-    return (CountHashRemainder(hash, capacity) + attempt * hash2) % capacity;
+    return xcrc32((const unsigned char *)stroke, strlen(stroke), 0) % capacity;
 }
