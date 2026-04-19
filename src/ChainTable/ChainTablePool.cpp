@@ -38,10 +38,10 @@ static inline int simd_strcmp_32(const char* a, const char* b) {
 #endif
 
 HashTable* CreateTable(size_t capacity, float load_factor) {
-    HashTable* hash_table = (HashTable*) calloc (1, sizeof(HashTable));
+    HashTable* hash_table = (HashTable *) calloc (1, sizeof(HashTable));
     CHECK_NULL(hash_table, ERROR_ARR, NULL);
 
-    hash_table->table = (Node**) calloc (capacity, sizeof(Node*));
+    hash_table->table = (Node **) calloc (capacity, sizeof(Node *));
     if (!hash_table->table) {
         perror(ERROR_ARR);
         free(hash_table);
@@ -96,20 +96,9 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
     CHECK_NULL_VOID(new_table, ERROR_ARR);
 
     for (size_t i = 0; i < hash_table->capacity; i++) {
-#ifdef _DPREFETCH
-        if (i + 8 < hash_table->capacity) {
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(&hash_table->table[i + 8]));
-        }
-#endif
         Node* cur = hash_table->table[i];
 
         while (cur) {
-#ifdef _DPREFETCH
-            if (cur->next) {
-                __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next));
-            }
-#endif
-
             Node* next = cur->next;
 
             unsigned int new_hash = Hash(cur->value, new_capacity);
@@ -134,6 +123,7 @@ void DestroyTable(HashTable* hash_table) {
 
 void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(hash_table);
+    assert(value);
     assert(Hash);
 
     if ((double)hash_table->size / hash_table->capacity > hash_table->load_factor) {
@@ -144,15 +134,8 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     Node* cur = hash_table->table[hash];
 
     while (cur) {
-#ifdef _DPREFETCH
-        if (cur->next) {
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next));
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next->value));
-        }
-#endif
-
 #ifdef _DSIMD
-        if (simd_strcmp_32(cur->value, value)) return;
+        if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) return;
 #else 
         if (strcmp(cur->value, value) == 0) return;
 #endif
@@ -171,6 +154,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
 
 void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(hash_table);
+    assert(value);
     assert(Hash);
 
     unsigned int hash = Hash(value, hash_table->capacity);
@@ -179,15 +163,8 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     Node* prev = NULL;
 
     while (cur) {
-#ifdef _DPREFETCH
-        if (cur->next) {
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next));
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next->value));
-        }
-#endif
-
 #ifdef _DSIMD
-        if (simd_strcmp_32(cur->value, value)) {
+        if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) {
 #else 
         if (strcmp(cur->value, value) == 0) {
 #endif
@@ -209,21 +186,15 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
 
 int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(hash_table);
+    assert(value);
     assert(Hash);
 
     unsigned int hash = Hash(value, hash_table->capacity);
     Node* cur = hash_table->table[hash];
 
     while (cur) {
-#ifdef _DPREFETCH
-        if (cur->next) {
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next));
-            __asm__ volatile ("prefetcht0 (%0)" :: "r"(cur->next->value));
-        }
-#endif
-
 #ifdef _DSIMD
-        if (simd_strcmp_32(cur->value, value)) {
+        if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) {
 #else 
         if (strcmp(cur->value, value) == 0) {
 #endif

@@ -8,30 +8,30 @@
 
 #include "crc32.h"
 
-unsigned int CountHashRemainder(unsigned int x, size_t capacity) {
-    return ((unsigned int)x) % capacity;
+unsigned int CountHashRemainder(unsigned int key, size_t capacity) {
+    return ((unsigned int)key) % capacity;
 }
 
-unsigned int CountHashBits(unsigned int x, size_t capacity) {
-    x ^= x >> 16;
-    x ^= x >> 8;
-    x ^= x >> 4;
+unsigned int CountHashBits(unsigned int key, size_t capacity) {
+    key ^= key >> 16;
+    key ^= key >> 8;
+    key ^= key >> 4;
 
-    return x % capacity;
+    return key % capacity;
 }
 
-unsigned int CountHashKnuth(unsigned int x, size_t capacity) {
+unsigned int CountHashKnuth(unsigned int key, size_t capacity) {
     double A = 0.6180339887498948;
-    return (unsigned int)(capacity * fmod(x * A, 1.0)) % capacity;
+    return (unsigned int)(capacity * fmod(key * A, 1.0)) % capacity;
 }
 
-unsigned int CountHashFloatBits(float x, size_t capacity) {
-    return CountHashBits((int)x, capacity);
+unsigned int CountHashFloatBits(float key, size_t capacity) {
+    return CountHashBits((int)key, capacity);
 }
 
-unsigned int CountHashFloatBitsBits(float x, size_t capacity) {
+unsigned int CountHashFloatBitsBits(float key, size_t capacity) {
     unsigned int bits = 0;
-    memcpy(&bits, &x, sizeof(bits));
+    memcpy(&bits, &key, sizeof(bits));
 
     bits ^= bits >> 16;
     bits ^= bits >> 8;
@@ -40,31 +40,31 @@ unsigned int CountHashFloatBitsBits(float x, size_t capacity) {
     return bits % capacity;
 }
 
-unsigned int CountHashMantissa(float x, size_t capacity) {
+unsigned int CountHashMantissa(float key, size_t capacity) {
     if (capacity == 0) return 0;
 
     unsigned int bits = 0;
-    memcpy(&bits, &x, sizeof(x));
+    memcpy(&bits, &key, sizeof(key));
 
     unsigned int mantissa = bits & 0x7FFFFF;
 
     return (unsigned int)(mantissa % capacity);
 }
 
-unsigned int CountHashExponent(float x, size_t capacity) {
+unsigned int CountHashExponent(float key, size_t capacity) {
     if (capacity == 0) return 0;
 
     unsigned int bits = 0;
-    memcpy(&bits, &x, sizeof(x));
+    memcpy(&bits, &key, sizeof(key));
 
     unsigned int exponent = (bits >> 23) & 0xFF;
 
     return exponent % capacity;
 }
 
-unsigned int CountHashMantissaExponent(float x, size_t capacity) {
+unsigned int CountHashMantissaExponent(float key, size_t capacity) {
     unsigned int bits = 0;
-    memcpy(&bits, &x, sizeof(bits));
+    memcpy(&bits, &key, sizeof(bits));
 
     unsigned int mantissa = bits & 0x7FFFFF;
     unsigned int exponent = (bits >> 23) & 0xFF;
@@ -73,40 +73,68 @@ unsigned int CountHashMantissaExponent(float x, size_t capacity) {
     return result % capacity;
 }
 
-unsigned int CountHashStrokeSize(const char* stroke, size_t capacity) {
-    assert(stroke);
+unsigned int CountHashStringSize(const char* string, size_t capacity) {
+    assert(string);
 
-    return strlen(stroke) % capacity;
+    return strlen(string) % capacity;
 }
 
-unsigned int CountHashStrokeSymbols(const char* stroke, size_t capacity) {
-    assert(stroke);
+unsigned int CountHashStringSymbols(const char* string, size_t capacity) {
+    assert(string);
 
-    int size = strlen(stroke);
+    int size = strlen(string);
     unsigned int result = 0;
     for (int i = 0; i < size; i++) {
-        result += stroke[i];
+        result += string[i];
     }
 
     return result % capacity;
 }
 
-unsigned int CountHashStrokePolinomial(const char* stroke, size_t capacity) {
-    assert(stroke);
+unsigned int CountHashStringRolXor(const char* string, size_t capacity) {
+    assert(string);
+    int size = strlen(string);
+    if (size == 0) return 0;
 
-    int size = strlen(stroke);
+    unsigned int result = (unsigned char)string[0];
+    for (int i = 1; i < size; i++) {
+        result = (result << 1) | (result >> 31);
+        result ^= (unsigned char)string[i];
+    }
+    
+    return result % capacity;
+}
+
+unsigned int CountHashStringRorXor(const char* string, size_t capacity) {
+    assert(string);
+    int size = strlen(string);
+    if (size == 0) return 0;
+
+    unsigned int result = (unsigned char)string[0];
+    for (int i = 1; i < size; i++) {
+        result = (result >> 1) | (result << 31);
+        result ^= (unsigned char)string[i];
+    }
+
+    return result % capacity;
+}
+
+unsigned int CountHashStringPolinomial(const char* string, size_t capacity) {
+    assert(string);
+
+    int size = strlen(string);
     unsigned int result = 0;
     unsigned int P = 1027;
 
     for (int i = 0; i < size; i++) {
-        result = (P * result + stroke[i]) % capacity;
+        result = (P * result + string[i]) % capacity;
     }
 
     return result % capacity;
 }
 
-unsigned int CountHashcrc32(const char* stroke, size_t capacity) {
-    assert(stroke);
+unsigned int CountHashcrc32(const char* string, size_t capacity) {
+    assert(string);
 
-    return xcrc32((const unsigned char *)stroke, strlen(stroke), 0) % capacity;
+    return xcrc32((const unsigned char *)string, strlen(string), 0) % capacity;
 }

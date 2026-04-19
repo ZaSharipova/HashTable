@@ -19,38 +19,38 @@ double GetTimeInMSec(clock_t start, clock_t end) {
 char** ReadString(const char* filename, int number_of_elements) {
     assert(filename);
 
-    FILE* fp = fopen(filename, "rb");
-    if (!fp) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
         perror("Error fopen.\n");
         return NULL;
     }
 
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    rewind(fp);
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
 
-    char* data = (char*) calloc(1, file_size + 1);
+    char* data = (char *) calloc (1, file_size + 1);
     if (!data) {
-        fclose(fp);
+        fclose(file);
         return NULL;
     }
 
-    size_t bytes_read = fread(data, 1, file_size, fp);
+    size_t bytes_read = fread(data, 1, file_size, file);
     if ((long)bytes_read != file_size) {
         perror("Error fread.\n");
         free(data);
-        fclose(fp);
+        fclose(file);
         return NULL;
     }
-    fclose(fp);
+    fclose(file);
 
-    char** keys = (char**) calloc (number_of_elements, sizeof(char*));
+    char** keys = (char **) calloc (number_of_elements, sizeof(char*));
     if (!keys) {
         free(data);
         return NULL;
     }
 
-    char* merger = (char*) aligned_alloc (32, (size_t)number_of_elements * 32);
+    char* merger = (char *) aligned_alloc (32, (size_t)number_of_elements * 32);
     if (!merger) {
         free(keys);
         free(data);

@@ -1,8 +1,7 @@
 #ifndef CHAIN_TABLE_POOL_H
 #define CHAIN_TABLE_POOL_H
 
-#include <stddef.h>
-
+#include <stdio.h>
 #include "HashFunctions.h"
 
 typedef struct Node {

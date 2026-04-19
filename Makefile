@@ -1,11 +1,15 @@
 CC       = g++
-CFLAGS   = -Wall -Wextra -O2 -msse4.2 -mavx2
+CFLAGS   = -Wall -Wextra -O3 -msse4.2 -mavx2 -g
 INCLUDES = -Iinclude -Iinclude/ChainTable
 
 OBJ_DIR  = obj
 BIN_DIR  = bin
 GEN_DIR  = data
-USE_DIR  = callgrind_big
+USE_DIR  = callgrind_small
+
+COMMON_SRCS = src/HashFunctions.cpp src/CommonFunctions.cpp src/Test1.cpp
+COMMON_OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(COMMON_SRCS))
+TEST1_OBJ = $(OBJ_DIR)/Test1.o
 
 # make result CRC_INTR=1 POOL=1
 SRCS  = src/main.cpp            \
@@ -66,6 +70,12 @@ generate: | $(BIN_DIR) $(GEN_DIR)
 	@$(CC) $(CFLAGS) $(INCLUDES) src/Additional/GenerateQueries.cpp src/CommonFunctions.cpp -o $(BIN_DIR)/gen_qry
 	@$(BIN_DIR)/gen_qry > $(GEN_DIR)/tests_queries.txt
 
+test1: $(TEST1_OBJ) $(COMMON_OBJS) | $(BIN_DIR)
+	@echo "\n=====Running test1======"
+	@$(CC) -Wall -Wextra -O2 $^ -o $(BIN_DIR)/test1 -lm
+	@./bin/test1
+	@python3 src/Test1Graphic.py
+
 result: $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/result
 	@./$(BIN_DIR)/result
@@ -81,6 +91,20 @@ valg: $(BIN_DIR)/result | $(USE_DIR)
 	         > $(USE_DIR)/callgrind_$${NAME}.txt; 					\
 	echo "=== Текст: $(USE_DIR)/callgrind_$${NAME}.txt ==="; 		\
 	kcachegrind $(USE_DIR)/callgrind_$${NAME}.out &
+
+.PHONY: perf
+perf: $(BIN_DIR)/result | $(USE_DIR)
+	@NAME=$${NAME:-run}; \
+	echo "=== perf record: $${NAME} ==="; \
+	perf record -g --call-graph dwarf \
+		-o $(USE_DIR)/perf_$${NAME}.data \
+		./$(BIN_DIR)/result; \
+	perf report -i $(USE_DIR)/perf_$${NAME}.data \
+		--stdio \
+		--sort=symbol \
+		--percent-limit=0.1 \
+		> $(USE_DIR)/perf_$${NAME}.txt; \
+	echo "=== Результат: $(USE_DIR)/perf_$${NAME}.txt ==="
 
 
 $(OBJ_DIR)/%.o: src/%.cpp
@@ -98,3 +122,25 @@ $(OBJ_DIR) $(BIN_DIR) $(GEN_DIR) $(USE_DIR):
 
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR) $(USE_DIR)
+
+.PHONY: bench
+
+.PHONY: bench
+bench:
+	@mkdir -p images
+	@rm -f temp.txt
+	@( \
+		counter=0; \
+		while true; do \
+			temp=$$(sensors | grep 'Core 2' | awk '{print $$3}' | tr -d '+°C'); \
+			echo "$$counter $$temp"; \
+			counter=$$((counter + 1)); \
+			sleep 1; \
+		done \
+	) > temp.txt & \
+	LOGGER_PID=$$!; \
+	echo "Starting benchmark..."; \
+	taskset -c 2 $(MAKE) result $(EXTRA); \
+	kill $$LOGGER_PID 2>/dev/null; \
+	gnuplot scripts/plot_temp.gp
+	@echo "Done! Plot saved to images/temperature_plot.png"

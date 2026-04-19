@@ -8,13 +8,13 @@
 
 #include <immintrin.h>
 
-unsigned int CountHashcrc32(const char* stroke, size_t capacity) {
-    assert(stroke);
+unsigned int CountHashcrc32(const char* string, size_t capacity) {
+    assert(string);
 
     unsigned int hash = 0xFFFFFFFF;
-    while (*stroke) {
-        hash = _mm_crc32_u8(hash, (unsigned char)*stroke);
-        stroke++;
+    while (*string) {
+        hash = _mm_crc32_u8(hash, (unsigned char)*string);
+        string++;
     }
 
     return hash % capacity;

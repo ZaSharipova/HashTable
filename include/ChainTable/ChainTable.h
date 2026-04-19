@@ -2,7 +2,6 @@
 #define CHAIN_TABLE_H
 
 #include <stddef.h>
-
 #include "HashFunctions.h"
 
 typedef struct Node {
@@ -19,7 +18,6 @@ typedef struct {
 
 HashTable* CreateTable(size_t capacity, float load_factor);
 void DestroyTable(HashTable* hash_table);
-
 void Insert(HashTable* hash_table, const char* value, HashFunc hash);
 void Delete(HashTable* hash_table, const char* value, HashFunc hash);
 int  Contains(HashTable* hash_table, const char* value, HashFunc hash);

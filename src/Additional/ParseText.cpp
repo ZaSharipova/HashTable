@@ -1,6 +1,4 @@
 #include <stdio.h>
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -12,31 +10,32 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    FILE* in = fopen(argv[1], "r");
-    if (!in) {
+    FILE* in_file = fopen(argv[1], "r");
+    if (!in_file) {
         perror("Error opening input");
         return 1;
     }
 
-    FILE* out = fopen(argv[2], "a");
-    if (!out) {
+    FILE* out_file = fopen(argv[2], "a");
+    if (!out_file) {
         perror("Error opening output");
-        fclose(in);
+        fclose(in_file);
         return 1;
     }
 
     char word[MAX_WORD_LEN + 1] = {};
     int len = 0;
-    int c = 0;
+    int symbol = 0;
 
-    while ((c = fgetc(in)) != EOF) {
-        if (isalpha(c)) {
-            if (len < MAX_WORD_LEN)
-                word[len++] = (char)c;
+    while ((symbol = fgetc(in_file)) != EOF) {
+        if (isalpha(symbol)) {
+            if (len < MAX_WORD_LEN) {
+                word[len++] = (char)symbol;
+            }
         } else {
             if (len > 0) {
                 word[len] = '\0';
-                fprintf(out, "%s\n", word);
+                fprintf(out_file, "%s\n", word);
                 len = 0;
             }
         }
@@ -44,10 +43,10 @@ int main(int argc, char* argv[]) {
 
     if (len > 0) {
         word[len] = '\0';
-        fprintf(out, "%s\n", word);
+        fprintf(out_file, "%s\n", word);
     }
 
-    fclose(in);
-    fclose(out);
+    fclose(in_file);
+    fclose(out_file);
     return 0;
 }

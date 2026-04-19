@@ -19,15 +19,39 @@
 #include "CommonFunctions.h"
 #include "Config.h"
 
+void PrintChainStats(HashTable* hash_table) {
+    assert(hash_table);
+    int max_chain = 0, empty = 0;
+    unsigned long long total = 0;
+
+    for (int i = 0; i < hash_table->capacity; i++) {
+        int len = 0;
+        Node* cur = hash_table->table[i];
+        while (cur) {
+            len++;
+            cur = cur->next;
+        }
+
+        if (len == 0) empty++;
+        if (len > max_chain) max_chain = len;
+
+        total += len;
+    }
+
+    printf("buckets: %d, empty: %d, max chain: %d, avg: %.2f\n",
+        hash_table->capacity, empty, max_chain,
+        (double)total / hash_table->capacity);
+}
+
 static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long long *ticks);
 
 int main(void) {
     srand(SEED);
 
-    char** keys = ReadString("data/tests_string.txt", NUMBER_KEYS);
+    char** keys = ReadString("out.txt", NUMBER_KEYS);
     if (!keys) return 1;
 
-    char** queries = ReadString("data/tests_queries.txt", NUMBER_QUERIES);
+    char** queries = ReadString("in.txt", NUMBER_QUERIES);
     if (!queries) {
         free(keys);
         return 1;
@@ -57,6 +81,8 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
     for (int i = 0; i < NUMBER_KEYS; i++) {
         Insert(hash_table, keys[i], CountHashcrc32);
     }
+
+    PrintChainStats(hash_table);
 
     unsigned long long ticks_start = __rdtsc();
     clock_t time_start = clock();
