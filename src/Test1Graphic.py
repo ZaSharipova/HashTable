@@ -74,9 +74,9 @@ if os.path.exists(timing_file):
     ax_tk = ax_ms.twinx()
 
     bars_ms = ax_ms.bar(x - width/2, subset["time_ms"].values, width,
-                        color = "#4C72B0", alpha = 0.85, label = "Время (мс)")
+        color = "#4C72B0", alpha = 0.85, label = "Время (мс)")
     bars_tk = ax_tk.bar(x + width/2, subset["time_ticks"].values, width,
-                        color = "#DD8452", alpha = 0.85, label = "Тики (rdtsc)")
+        color = "#DD8452", alpha = 0.85, label = "Тики (rdtsc)")
 
     ax_ms.bar_label(bars_ms, fmt = "%.2f", padding = 3, fontsize = 8)
     ax_tk.bar_label(bars_tk, fmt = "%.2e", padding = 3, fontsize = 8)

@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 
-
 def read_data(filepath: str):
     names, times, ticks, instrs = [], [], [], []
     with open(filepath, newline = "", encoding = "utf-8") as f:
@@ -25,8 +24,7 @@ def save_fig(fig, path):
     plt.close(fig)
 
 
-def add_delta_labels(ax, values, fmt = "{:.1f}", delta_color_up = "#c0392b",
-                     delta_color_down = "#27ae60"):
+def add_delta_labels(ax, values, fmt = "{:.1f}", delta_color_up = "#c0392b", delta_color_down = "#27ae60"):
     bars = ax.patches
     for i, (bar, val) in enumerate(zip(bars, values)):
         ax.text(
@@ -35,10 +33,12 @@ def add_delta_labels(ax, values, fmt = "{:.1f}", delta_color_up = "#c0392b",
             fmt.format(val),
             ha = "center", va = "bottom", fontsize = 8, fontweight = "bold",
         )
+
         if i > 0:
             prev = values[i - 1]
             if prev == 0:
                 continue
+
             delta = (val - prev) / prev * 100
             color = delta_color_down if delta < 0 else delta_color_up
             sign = "▼" if delta < 0 else "▲"
@@ -49,12 +49,11 @@ def add_delta_labels(ax, values, fmt = "{:.1f}", delta_color_up = "#c0392b",
                 ha = "center", va = "center", fontsize = 7,
                 color = color, fontweight = "bold",
                 bbox = dict(boxstyle = "round,pad=0.15", facecolor = "white",
-                            edgecolor = "none", alpha = 0.75),
+                    edgecolor = "none", alpha = 0.75),
             )
 
 
-def add_delta_labels_grouped(ax, bars, values, delta_color_up = "#c0392b",
-                             delta_color_down = "#27ae60"):
+def add_delta_labels_grouped(ax, bars, values, delta_color_up = "#c0392b", delta_color_down = "#27ae60"):
     for i, (bar, val) in enumerate(zip(bars, values)):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -66,6 +65,7 @@ def add_delta_labels_grouped(ax, bars, values, delta_color_up = "#c0392b",
             prev = values[i - 1]
             if prev == 0:
                 continue
+
             delta = (val - prev) / prev * 100
             color = delta_color_down if delta < 0 else delta_color_up
             sign = "▼" if delta < 0 else "▲"
@@ -76,7 +76,7 @@ def add_delta_labels_grouped(ax, bars, values, delta_color_up = "#c0392b",
                 ha = "center", va = "center", fontsize = 6,
                 color = color, fontweight = "bold",
                 bbox = dict(boxstyle = "round,pad=0.1", facecolor = "white",
-                            edgecolor = "none", alpha = 0.8),
+                    edgecolor = "none", alpha = 0.8),
             )
 
 
@@ -94,7 +94,6 @@ def plot_all(names, times, ticks, instrs, outdir: str):
 
     W = max(8, len(names) * 1.6)
 
-    # --- Время (мс) ---
     fig, ax = plt.subplots(figsize = (W, 5.5))
     ax.bar(x, times, color = "#7FB3E0", edgecolor = "black", linewidth = 0.6)
     add_delta_labels(ax, times, fmt = "{:.1f}")
@@ -104,7 +103,6 @@ def plot_all(names, times, ticks, instrs, outdir: str):
     ax.set_title("Время выполнения по реализациям")
     save_fig(fig, os.path.join(outdir, "time_ms.png"))
 
-    # --- Такты ---
     fig, ax = plt.subplots(figsize = (W, 5.5))
     ticks_b = ticks / 1e9
     ax.bar(x, ticks_b, color = "#F0B27A", edgecolor = "black", linewidth = 0.6)
@@ -115,7 +113,6 @@ def plot_all(names, times, ticks, instrs, outdir: str):
     ax.set_title("Процессорные такты по реализациям")
     save_fig(fig, os.path.join(outdir, "ticks.png"))
 
-    # --- Инструкции ---
     fig, ax = plt.subplots(figsize = (W, 5.5))
     instrs_b = instrs / 1e9
     ax.bar(x, instrs_b, color = "#82E0AA", edgecolor = "black", linewidth = 0.6)
@@ -126,7 +123,6 @@ def plot_all(names, times, ticks, instrs, outdir: str):
     ax.set_title("Количество инструкций (Ir) по реализациям")
     save_fig(fig, os.path.join(outdir, "instructions.png"))
 
-    # --- Сводный (нормированный) ---
     fig, ax = plt.subplots(figsize = (W + 1, 5.5))
     width = 0.25
     t_norm = times / times.max()
@@ -134,11 +130,11 @@ def plot_all(names, times, ticks, instrs, outdir: str):
     i_norm = instrs / instrs.max()
 
     bars_t = ax.bar(x - width, t_norm, width, label = "Время",
-                    color = "#7FB3E0", edgecolor = "black", linewidth = 0.5)
+        color = "#7FB3E0", edgecolor = "black", linewidth = 0.5)
     bars_k = ax.bar(x, k_norm, width, label = "Такты",
-                    color = "#F0B27A", edgecolor = "black", linewidth = 0.5)
+        color = "#F0B27A", edgecolor = "black", linewidth = 0.5)
     bars_i = ax.bar(x + width, i_norm, width, label = "Инструкции",
-                    color = "#82E0AA", edgecolor = "black", linewidth = 0.5)
+        color = "#82E0AA", edgecolor = "black", linewidth = 0.5)
 
     add_delta_labels_grouped(ax, bars_t, t_norm)
     add_delta_labels_grouped(ax, bars_k, k_norm)
@@ -151,23 +147,84 @@ def plot_all(names, times, ticks, instrs, outdir: str):
     ax.legend()
     save_fig(fig, os.path.join(outdir, "summary.png"))
 
-    # --- Итоговый выигрыш ---
-    baseline_time   = times[1]
-    baseline_ticks  = ticks[1]
-    baseline_instrs = instrs[1]
+    baseline_idx = None
+    for i, name in enumerate(names):
+        if "-O3" in name or name == "-O3":
+            baseline_idx = i
+            break
 
-    last = len(names) - 1
-    gain_time   = (baseline_time   - times[last])   / baseline_time   * 100
-    gain_ticks  = (baseline_ticks  - ticks[last])   / baseline_ticks  * 100
-    gain_instrs = (baseline_instrs - instrs[last])  / baseline_instrs * 100
+    if baseline_idx is None:
+        baseline_idx = 1
+
+    baseline_time = times[baseline_idx]
+    baseline_ticks = ticks[baseline_idx]
+    baseline_instrs = instrs[baseline_idx]
+
+    show_idxs = [i for i, name in enumerate(names)
+        if i != baseline_idx and "-O0" not in name and name != "-O0"]
 
     print(f"\nГрафики сохранены в {outdir}/")
     print("  time_ms.png, ticks.png, instructions.png, summary.png")
-    print(f"\nОбщий выигрыш последней реализации ({names[last]}) относительно baseline ({names[1]}):")
-    print(f"  Время:        {gain_time:+.2f}%")
-    print(f"  Такты:        {gain_ticks:+.2f}%")
-    print(f"  Инструкции:   {gain_instrs:+.2f}%")
 
+    print(f"\nВыигрыш относительно baseline ({names[baseline_idx]}):")
+    print(f"  {'Реализация':<30} {'Время':>16} {'Такты':>16} {'Инструкции':>16}")
+    print(f"  {'-' * 78}")
+
+    for i in show_idxs:
+        gain_t = (baseline_time   - times[i])   / baseline_time   * 100
+        gain_k = (baseline_ticks  - ticks[i])   / baseline_ticks  * 100
+        gain_i = (baseline_instrs - instrs[i])  / baseline_instrs * 100
+
+        ratio_t = baseline_time   / times[i]
+        ratio_k = baseline_ticks  / ticks[i]
+        ratio_i = baseline_instrs / instrs[i]
+
+        print(f"  {names[i]:<30} {gain_t:>+7.2f}% ({ratio_t:.2f}x)"
+              f" {gain_k:>+7.2f}% ({ratio_k:.2f}x)"
+              f" {gain_i:>+7.2f}% ({ratio_i:.2f}x)")
+
+    label_width = 50
+    col_width = 22
+
+    def trim(text, width):
+        return text if len(text) <= width else text[:width - 3] + "..."
+
+    print("\nУскорение относительно предыдущей версии:")
+
+    header = (
+        f"  {'Переход':<{label_width}} "
+        f"{'Время':>{col_width}} "
+        f"{'Такты':>{col_width}} "
+        f"{'Инструкции':>{col_width}}"
+    )
+
+    print(header)
+    print("  " + "-" * (label_width + 3 * (col_width + 1)))
+
+    all_idxs = [baseline_idx] + show_idxs
+
+    for prev, curr in zip(all_idxs[:-1], all_idxs[1:]):
+        gain_t = (times[prev] - times[curr]) / times[prev] * 100
+        gain_k = (ticks[prev] - ticks[curr]) / ticks[prev] * 100
+        gain_i = (instrs[prev] - instrs[curr]) / instrs[prev] * 100
+
+        ratio_t = times[prev] / times[curr]
+        ratio_k = ticks[prev] / ticks[curr]
+        ratio_i = instrs[prev] / instrs[curr]
+
+        label = f"{names[prev]}  ->  {names[curr]}"
+        label = trim(label, label_width)
+
+        col_t = f"{gain_t:+7.2f}% ({ratio_t:5.2f}x)"
+        col_k = f"{gain_k:+7.2f}% ({ratio_k:5.2f}x)"
+        col_i = f"{gain_i:+7.2f}% ({ratio_i:5.2f}x)"
+
+        print(f"  {label:<{label_width}} "
+            f"{col_t:>{col_width}} "
+            f"{col_k:>{col_width}} "
+            f"{col_i:>{col_width}}")
+
+    print("\nКПД = 2,81 / 14 * 1000 = 200,7")
 
 def main():
     parser = argparse.ArgumentParser(description = "Визуализация профиля хеш-функций")
