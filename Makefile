@@ -11,7 +11,6 @@ COMMON_SRCS = src/HashFunctions.cpp src/CommonFunctions.cpp src/Test1.cpp
 COMMON_OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(COMMON_SRCS))
 TEST1_OBJ = $(OBJ_DIR)/Test1.o
 
-# make result CRC_INTR=1 POOL=1
 SRCS  = src/main.cpp            \
         src/CommonFunctions.cpp
 
@@ -36,20 +35,9 @@ ifdef SIMD
   	CFLAGS += -D_DSIMD
 endif
 
-ifdef PREFETCH
-	CFLAGS += -D_DPREFETCH
+ifdef CHECK_FIRST_CHAR
+	CFLAGS += -D_DCHECK_FIRST_CHAR
 endif
-
-
-# ifdef POOL
-#   SRCS += src/ChainTable/ChainTablePool.cpp
-# else
-#   SRCS += src/ChainTable/ChainTable.cpp
-# endif
-
-# ifdef CRC_INTR
-#   SRCS += src/Crc32/Crc_mm_crc32_u64.cpp
-# endif
 
 OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 ifdef CRC_INTR_STRLEN
@@ -60,7 +48,7 @@ ifdef SIMD_S
   OBJS += MyStrcmp.o
 endif
 
-.PHONY: all generate result valg clean
+.PHONY: all generate result valg clean temp_start temp_stop
 
 all: generate result
 
@@ -76,7 +64,11 @@ test1: $(TEST1_OBJ) $(COMMON_OBJS) | $(BIN_DIR)
 	@./bin/test1
 	@python3 src/Test1Graphic.py
 
-result: $(OBJS) | $(BIN_DIR)
+result:
+	$(MAKE) clean
+	$(MAKE) _result $(MAKEFLAGS)
+
+_result: $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/result
 	@./$(BIN_DIR)/result
 
@@ -94,16 +86,16 @@ valg: $(BIN_DIR)/result | $(USE_DIR)
 
 .PHONY: perf
 perf: $(BIN_DIR)/result | $(USE_DIR)
-	@NAME=$${NAME:-run}; \
-	echo "=== perf record: $${NAME} ==="; \
-	perf record -g --call-graph dwarf \
-		-o $(USE_DIR)/perf_$${NAME}.data \
-		./$(BIN_DIR)/result; \
-	perf report -i $(USE_DIR)/perf_$${NAME}.data \
-		--stdio \
-		--sort=symbol \
-		--percent-limit=0.1 \
-		> $(USE_DIR)/perf_$${NAME}.txt; \
+	@NAME=$${NAME:-run}; 									\
+	echo "=== perf record: $${NAME} ==="; 					\
+	perf record -g --call-graph dwarf 						\
+		-o $(USE_DIR)/perf_$${NAME}.data 					\
+		./$(BIN_DIR)/result; 								\
+	perf report -i $(USE_DIR)/perf_$${NAME}.data 			\
+		--stdio 											\
+		--sort=symbol 										\
+		--percent-limit=0.1 								\
+		> $(USE_DIR)/perf_$${NAME}.txt;						\
 	echo "=== Результат: $(USE_DIR)/perf_$${NAME}.txt ==="
 
 
@@ -124,23 +116,46 @@ clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR) $(USE_DIR)
 
 .PHONY: bench
-
-.PHONY: bench
 bench:
 	@mkdir -p images
 	@rm -f temp.txt
-	@( \
-		counter=0; \
-		while true; do \
+	@( 																			\
+		counter=0; 																\
+		while true; do 															\
 			temp=$$(sensors | grep 'Core 2' | awk '{print $$3}' | tr -d '+°C'); \
-			echo "$$counter $$temp"; \
-			counter=$$((counter + 1)); \
-			sleep 1; \
-		done \
-	) > temp.txt & \
-	LOGGER_PID=$$!; \
-	echo "Starting benchmark..."; \
-	taskset -c 2 $(MAKE) result $(EXTRA); \
-	kill $$LOGGER_PID 2>/dev/null; \
+			echo "$$counter $$temp"; 											\
+			counter=$$((counter + 1)); 											\
+			sleep 1; 															\
+		done 																	\
+	) > temp.txt & 																\
+	LOGGER_PID=$$!; 															\
+	echo "Starting benchmark..."; 												\
+	taskset -c 2 $(MAKE) result $(EXTRA); 										\
+	kill $$LOGGER_PID 2>/dev/null; 												\
 	gnuplot scripts/plot_temp.gp
 	@echo "Done! Plot saved to images/temperature_plot.png"
+
+temp_start:
+	@mkdir -p images
+	@rm -f temp.txt
+	@( 																			\
+		counter=0; 																\
+		while true; do 															\
+			temp=$$(sensors | grep 'Core 2' | awk '{print $$3}' | tr -d '+°C'); \
+			echo "$$counter $$temp"; 											\
+			counter=$$((counter + 1)); 											\
+			sleep 1; 															\
+		done 																	\
+	) > temp.txt & 																\
+	echo $$! > .temp_pid; 														\
+	echo "Temperature logging started (PID $$(cat .temp_pid))"
+
+temp_stop:
+	@if [ -f .temp_pid ]; then 										\
+		kill $$(cat .temp_pid) 2>/dev/null; 						\
+		rm -f .temp_pid; 											\
+		gnuplot scripts/plot_temp.gp; 								\
+		echo "Stopped. Plot saved to images/temperature_plot.png"; 	\
+	else 															\
+		echo "No logger running"; 									\
+	fi

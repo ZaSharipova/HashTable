@@ -11,14 +11,6 @@
 #include "Config.h"
 
 #ifdef _DSIMD
-// static inline int simd_strcmp_32(const char* a, const char* b) {
-//     __m256i va = _mm256_load_si256((const __m256i*)a);
-//     __m256i vb = _mm256_load_si256((const __m256i*)b);
-//     __m256i cmp = _mm256_cmpeq_epi8(va, vb);
-    
-//     return _mm256_movemask_epi8(cmp) == (int)0xFFFFFFFF;
-// }
-//extern "C" int simd_strcmp_32(const char*, const char*);
 static inline int simd_strcmp_32(const char* a, const char* b) {
     int mask = 0;
     __asm__ volatile (
@@ -135,9 +127,13 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
 
     while (cur) {
 #ifdef _DSIMD
-        if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) return;
-#else 
-        if (strcmp(cur->value, value) == 0) return;
+        #ifdef _DCHECK_FIRST_CHAR
+            if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) return;
+        #else
+            if (simd_strcmp_32(cur->value, value)) return;
+        #endif
+#else
+            if (strcmp(cur->value, value) == 0) return;
 #endif
         cur = cur->next;
     }
@@ -164,9 +160,13 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
 
     while (cur) {
 #ifdef _DSIMD
-        if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) {
-#else 
-        if (strcmp(cur->value, value) == 0) {
+        #ifdef _DCHECK_FIRST_CHAR
+            if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) {
+        #else
+            if (simd_strcmp_32(cur->value, value)) {
+        #endif
+#else
+            if (strcmp(cur->value, value) == 0) {
 #endif
             if (prev) {
                 prev->next = cur->next;
@@ -194,8 +194,12 @@ int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
 
     while (cur) {
 #ifdef _DSIMD
-        if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) {
-#else 
+        #ifdef _DCHECK_FIRST_CHAR
+            if (cur->value[0] == value[0] && simd_strcmp_32(cur->value, value)) {
+        #else
+            if (simd_strcmp_32(cur->value, value)) {
+        #endif
+#else
         if (strcmp(cur->value, value) == 0) {
 #endif
             return 1;

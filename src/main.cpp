@@ -19,29 +19,29 @@
 #include "CommonFunctions.h"
 #include "Config.h"
 
-void PrintChainStats(HashTable* hash_table) {
-    assert(hash_table);
-    int max_chain = 0, empty = 0;
-    unsigned long long total = 0;
+// void PrintChainStats(HashTable* hash_table) {
+//     assert(hash_table);
+//     int max_chain = 0, empty = 0;
+//     unsigned long long total = 0;
 
-    for (int i = 0; i < hash_table->capacity; i++) {
-        int len = 0;
-        Node* cur = hash_table->table[i];
-        while (cur) {
-            len++;
-            cur = cur->next;
-        }
+//     for (int i = 0; i < hash_table->capacity; i++) {
+//         int len = 0;
+//         Node* cur = hash_table->table[i];
+//         while (cur) {
+//             len++;
+//             cur = cur->next;
+//         }
 
-        if (len == 0) empty++;
-        if (len > max_chain) max_chain = len;
+//         if (len == 0) empty++;
+//         if (len > max_chain) max_chain = len;
 
-        total += len;
-    }
+//         total += len;
+//     }
 
-    printf("buckets: %d, empty: %d, max chain: %d, avg: %.2f\n",
-        hash_table->capacity, empty, max_chain,
-        (double)total / hash_table->capacity);
-}
+//     printf("buckets: %d, empty: %d, max chain: %d, avg: %.2f\n",
+//         hash_table->capacity, empty, max_chain,
+//         (double)total / hash_table->capacity);
+// }
 
 static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long long *ticks);
 
@@ -82,19 +82,29 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
         Insert(hash_table, keys[i], CountHashcrc32);
     }
 
-    PrintChainStats(hash_table);
+    // PrintChainStats(hash_table);
+    unsigned long long ticks_total = 0;
+    double time_total = 0;
+    const int RUNS = 5;
 
-    unsigned long long ticks_start = __rdtsc();
-    clock_t time_start = clock();
-    for (int i = 0; i < 5; i++) {
+    for (int run = 0; run < RUNS + 1; run++) {
+        unsigned long long ticks_start = __rdtsc();
+        clock_t time_start = clock();
+
         for (int i = 0; i < NUMBER_QUERIES; i++) {
             *sink += Contains(hash_table, queries[i], CountHashcrc32);
         }
+
+        clock_t time_end = clock();
+        unsigned long long ticks_end = __rdtsc();
+
+        if (run == 0) continue;
+        ticks_total += (ticks_end - ticks_start);
+        time_total += GetTimeInMSec(time_start, time_end);
     }
-    clock_t time_end = clock();
-    unsigned long long ticks_end = __rdtsc();
-    *ticks = ticks_end - ticks_start;
+
+    *ticks = ticks_total / RUNS;
 
     DestroyTable(hash_table);
-    return GetTimeInMSec(time_start, time_end);
+    return time_total / RUNS;
 }
