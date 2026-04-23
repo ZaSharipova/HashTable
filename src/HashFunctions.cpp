@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <immintrin.h>
 
 #include "crc32.h"
 
@@ -101,7 +102,7 @@ unsigned int CountHashStringRolXor(const char* string, size_t capacity) {
         result = (result << 1) | (result >> 31);
         result ^= (unsigned char)string[i];
     }
-    
+
     return result % capacity;
 }
 
@@ -137,4 +138,23 @@ unsigned int CountHashcrc32(const char* string, size_t capacity) {
     assert(string);
 
     return xcrc32((const unsigned char *)string, strlen(string), 0) % capacity;
+}
+
+unsigned int CountHashcrc32_Intr(const char* string, size_t capacity) {
+    assert(string);
+
+    unsigned long long hash = 0xFFFFFFFF;
+    size_t len = strlen(string);
+    size_t i = 0;
+
+    for (; i + 8 <= len; i += 8) {
+        unsigned long long buf = *(const unsigned long long*)(string + i);
+        hash = _mm_crc32_u64(hash, buf);
+    }
+
+    for (; i < len; i++) {
+        hash = _mm_crc32_u8((unsigned int)hash, (unsigned char)string[i]);
+    }
+
+    return (unsigned int)hash % capacity;
 }

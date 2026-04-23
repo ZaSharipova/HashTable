@@ -8,7 +8,7 @@
 #include <immintrin.h>
 extern "C" size_t my_strlen(const char *string);
 
-unsigned int CountHashcrc32(const char* string, size_t capacity) {
+unsigned int CountHashcrc32_Strlen(const char* string, size_t capacity) {
     assert(string);
 
     unsigned long long hash = 0xFFFFFFFF;

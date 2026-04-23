@@ -224,7 +224,7 @@ def plot_all(names, times, ticks, instrs, outdir: str):
             f"{col_k:>{col_width}} "
             f"{col_i:>{col_width}}")
 
-    print("\nКПД = 2,81 / 14 * 1000 = 200,7")
+    print("\nКПД = 2,41 / 18 * 1000 = 113,88888")
 
 def main():
     parser = argparse.ArgumentParser(description = "Визуализация профиля хеш-функций")

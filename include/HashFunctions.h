@@ -21,5 +21,6 @@ unsigned int CountHashStringRolXor(const char* string, size_t capacity);
 unsigned int CountHashStringRorXor(const char* string, size_t capacity);
 unsigned int CountHashStringPolinomial(const char* string, size_t capacity);
 unsigned int CountHashcrc32(const char* string, size_t capacity);
+unsigned int CountHashcrc32_Intr(const char* string, size_t capacity);
 
 #endif // HASH_FUNCTIONS_H_

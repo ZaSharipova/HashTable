@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <immintrin.h>
 
-#ifdef _DCRC_INTR
+#ifdef _DCRC_INTR_STRLEN
 #include "CRC32_my.h"
 #else
 #include "HashFunctions.h"
@@ -12,7 +12,9 @@
 
 #ifdef _DPOOL
 #include "ChainTablePool.h"
-#else 
+#elif defined(_DLIST_TABLE)
+#include "ChainTableList.h"
+#else
 #include "ChainTable.h"
 #endif
 
@@ -48,10 +50,10 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
 int main(void) {
     srand(SEED);
 
-    char** keys = ReadString("out.txt", NUMBER_KEYS);
+    char** keys = ReadString("data/tests_string.txt", NUMBER_KEYS);
     if (!keys) return 1;
 
-    char** queries = ReadString("in.txt", NUMBER_QUERIES);
+    char** queries = ReadString("data/tests_queries.txt", NUMBER_QUERIES);
     if (!queries) {
         free(keys);
         return 1;
@@ -75,14 +77,21 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
     assert(sink);
     assert(ticks);
 
+#ifdef _DCRC_INTR
+    HashFunc hashFunc = CountHashcrc32_Intr;
+#elif defined(_DCRC_INTR_STRLEN)
+    HashFunc hashFunc = CountHashcrc32_Strlen;
+#else
+    HashFunc hashFunc = CountHashcrc32;
+#endif
+
     HashTable* hash_table = CreateTable(4, 10.0f);
     if (!hash_table) return -1;
 
     for (int i = 0; i < NUMBER_KEYS; i++) {
-        Insert(hash_table, keys[i], CountHashcrc32);
+        Insert(hash_table, keys[i], hashFunc);
     }
 
-    // PrintChainStats(hash_table);
     unsigned long long ticks_total = 0;
     double time_total = 0;
     const int RUNS = 5;
@@ -92,7 +101,7 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
         clock_t time_start = clock();
 
         for (int i = 0; i < NUMBER_QUERIES; i++) {
-            *sink += Contains(hash_table, queries[i], CountHashcrc32);
+            *sink += Contains(hash_table, queries[i], hashFunc);
         }
 
         clock_t time_end = clock();

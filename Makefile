@@ -5,7 +5,7 @@ INCLUDES = -Iinclude -Iinclude/ChainTable
 OBJ_DIR  = obj
 BIN_DIR  = bin
 GEN_DIR  = data
-USE_DIR  = callgrind_small
+USE_DIR  = callgrind_list
 
 COMMON_SRCS = src/HashFunctions.cpp src/CommonFunctions.cpp src/Test1.cpp
 COMMON_OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(COMMON_SRCS))
@@ -17,13 +17,16 @@ SRCS  = src/main.cpp            \
 ifdef POOL
   	CFLAGS += -D_DPOOL
   	SRCS   += src/ChainTable/ChainTablePool.cpp
+else ifdef LIST_TABLE
+  	CFLAGS += -D_DLIST_TABLE
+  	SRCS   += src/ChainTable/ChainTableList.cpp
 else
   	SRCS   += src/ChainTable/ChainTable.cpp
 endif
 
 ifdef CRC_INTR
   	CFLAGS += -D_DCRC_INTR
-  	SRCS   += src/Crc32/Crc_mm_crc32_u64.cpp
+	SRCS   += src/HashFunctions.cpp
 else ifdef CRC_INTR_STRLEN
   	CFLAGS += -D_DCRC_INTR_STRLEN
   	SRCS   += src/Crc32/Crc_mm_crc32_u64_strlen.cpp
@@ -64,11 +67,10 @@ test1: $(TEST1_OBJ) $(COMMON_OBJS) | $(BIN_DIR)
 	@./bin/test1
 	@python3 src/Test1Graphic.py
 
-result:
-	$(MAKE) clean
-	$(MAKE) _result $(MAKEFLAGS)
-
-_result: $(OBJS) | $(BIN_DIR)
+# result:
+# 	$(MAKE) clean
+# 	$(MAKE) _result $(MAKEFLAGS)
+result: $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/result
 	@./$(BIN_DIR)/result
 
