@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 typedef const char* HT_Value;
-typedef unsigned int (*HashFunc)(const char* value, size_t capacity);
+typedef unsigned int (*HashFunc)(const char* value);
 
 #define ALIGN_SIZE 32
 #define HT_POISON NULL

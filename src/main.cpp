@@ -3,10 +3,13 @@
 #include <time.h>
 #include <assert.h>
 #include <immintrin.h>
+#include <string.h>
 
 #ifdef _DCRC_INTR_STRLEN
 #include "CRC32_my.h"
+#include "HashFunctions.h"
 #else
+#include "CRC32_my.h"
 #include "HashFunctions.h"
 #endif
 
@@ -21,47 +24,41 @@
 #include "CommonFunctions.h"
 #include "Config.h"
 
-// void PrintChainStats(HashTable* hash_table) {
-//     assert(hash_table);
-//     int max_chain = 0, empty = 0;
-//     unsigned long long total = 0;
+#define NUMBER_OF_FUNCS 4
+#define INIT_HASH_FUNC(func) {func, #func}
 
-//     for (int i = 0; i < hash_table->capacity; i++) {
-//         int len = 0;
-//         Node* cur = hash_table->table[i];
-//         while (cur) {
-//             len++;
-//             cur = cur->next;
-//         }
+static float MeasureSearch(const char *name, char** keys, char** queries, int* sink, unsigned long long *ticks, HashFunc hashfunc);
 
-//         if (len == 0) empty++;
-//         if (len > max_chain) max_chain = len;
-
-//         total += len;
-//     }
-
-//     printf("buckets: %d, empty: %d, max chain: %d, avg: %.2f\n",
-//         hash_table->capacity, empty, max_chain,
-//         (double)total / hash_table->capacity);
-// }
-
-static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long long *ticks);
+struct FuncInfo {
+    HashFunc func;
+    const char *name;
+};
 
 int main(void) {
     srand(SEED);
 
-    char** keys = ReadString("data/tests_string.txt", NUMBER_KEYS);
+    char** keys = ReadString("out.txt", NUMBER_KEYS);
     if (!keys) return 1;
 
-    char** queries = ReadString("data/tests_queries.txt", NUMBER_QUERIES);
+    char** queries = ReadString("in.txt", NUMBER_QUERIES);
     if (!queries) {
         free(keys);
         return 1;
     }
 
     volatile int sink = 0;
-    unsigned long long ticks = 12;
-    float time = MeasureSearch(keys, queries, (int *)&sink, &ticks);
+    unsigned long long ticks = 0;
+    FuncInfo func_arr[NUMBER_OF_FUNCS] = {
+        INIT_HASH_FUNC(CountHashcrc32),
+        INIT_HASH_FUNC(CountHashStringPolinomial),
+        INIT_HASH_FUNC(CountHashStringRolXor),
+        INIT_HASH_FUNC(CountHashStringRorXor),
+    };
+
+    for (int i = 0; i < NUMBER_OF_FUNCS; i++) {
+        float time = MeasureSearch(func_arr[i].name, keys, queries, (int *)&sink, &ticks, func_arr[i].func);
+        printf("func: %s %f ms\n", func_arr[i].name, time);
+    }
 
     printf("time: %f ms\nticks: %llu\n", time, ticks);
     printf("sink = %d\n\n", sink);
@@ -71,11 +68,19 @@ int main(void) {
     return 0;
 }
 
-static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long long *ticks) {
+static float MeasureSearch(const char *name, char** keys, char** queries, int* sink, unsigned long long *ticks, HashFunc hashfunc) {
     assert(keys);
     assert(queries);
     assert(sink);
     assert(ticks);
+
+    char *filename = (char *) calloc (128, sizeof(char));
+    snprintf(filename, 128, "%s.txt", name);
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        fprintf(stderr, "ERROR opening file %s", name);
+        return -1;
+    }
 
 #ifdef _DCRC_INTR
     HashFunc hashFunc = CountHashcrc32_Intr;
@@ -101,7 +106,7 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
         clock_t time_start = clock();
 
         for (int i = 0; i < NUMBER_QUERIES; i++) {
-            *sink += Contains(hash_table, queries[i], hashFunc);
+            *sink += Contains(hash_table, queries[i], hashfunc);
         }
 
         clock_t time_end = clock();
@@ -115,5 +120,6 @@ static float MeasureSearch(char** keys, char** queries, int* sink, unsigned long
     *ticks = ticks_total / RUNS;
 
     DestroyTable(hash_table);
+    fclose(file);
     return time_total / RUNS;
 }

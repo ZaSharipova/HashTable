@@ -93,7 +93,7 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
         while (cur) {
             Node* next = cur->next;
 
-            unsigned int new_hash = Hash(cur->value, new_capacity);
+            unsigned int new_hash = Hash(cur->value) % new_capacity;
             cur->next = new_table[new_hash];
             new_table[new_hash] = cur;
             cur = next;
@@ -122,7 +122,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
         Rehash(hash_table, Hash);
     }
 
-    unsigned int hash = Hash(value, hash_table->capacity);
+    unsigned int hash = Hash(value) % hash_table->capacity;
     Node* cur = hash_table->table[hash];
 
     while (cur) {
@@ -153,7 +153,7 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(value);
     assert(Hash);
 
-    unsigned int hash = Hash(value, hash_table->capacity);
+    unsigned int hash = Hash(value) % hash_table->capacity;
 
     Node* cur = hash_table->table[hash];
     Node* prev = NULL;
@@ -189,7 +189,7 @@ int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(value);
     assert(Hash);
 
-    unsigned int hash = Hash(value, hash_table->capacity);
+    unsigned int hash = Hash(value) % hash_table->capacity;
     Node* cur = hash_table->table[hash];
 
     while (cur) {

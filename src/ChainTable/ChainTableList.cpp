@@ -279,7 +279,7 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
 
         while (cur != 0) {
             const char* val = old->data[cur];
-            unsigned int hash = Hash(val, new_cap);
+            unsigned int hash = Hash(val) % new_cap;
             ChainList_Insert(&new_buckets[hash], val);
             cur = old->next[cur];
         }
@@ -301,7 +301,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
         Rehash(hash_table, Hash);
     }
 
-    unsigned int hash = Hash(value, hash_table->capacity);
+    unsigned int hash = Hash(value) % hash_table->capacity;
     ChainList* chain = &hash_table->buckets[hash];
 
     if (ChainList_Find(chain, value) != 0) return;
@@ -315,7 +315,7 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(value);
     assert(Hash);
 
-    unsigned int hash = Hash(value, hash_table->capacity);
+    unsigned int hash = Hash(value) % hash_table->capacity;
     ChainList* chain = &hash_table->buckets[hash];
 
     int slot = ChainList_Find(chain, value);
@@ -330,6 +330,6 @@ int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
     assert(value);
     assert(Hash);
 
-    unsigned int hash = Hash(value, hash_table->capacity);
+    unsigned int hash = Hash(value) % hash_table->capacity;
     return ChainList_Find(&hash_table->buckets[hash], value) != 0;
 }

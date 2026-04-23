@@ -12,7 +12,7 @@
 #include "Config.h"
 
 static void SaveCSV(const char* filename, int* buckets);
-static void RunStr(const char* name, char** keys, unsigned int (*fn)(const char *, size_t), FILE* timing_file);
+static void RunStr(const char* name, char** keys, unsigned int (*fn)(const char *), FILE* timing_file);
 static char** ReadStr(const char* filename);
 
 int main(void) {

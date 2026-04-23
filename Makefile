@@ -30,6 +30,7 @@ ifdef CRC_INTR
 else ifdef CRC_INTR_STRLEN
   	CFLAGS += -D_DCRC_INTR_STRLEN
   	SRCS   += src/Crc32/Crc_mm_crc32_u64_strlen.cpp
+	SRCS   += src/HashFunctions.cpp
 else
   	SRCS   += src/HashFunctions.cpp
 endif
