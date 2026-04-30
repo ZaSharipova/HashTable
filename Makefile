@@ -1,5 +1,5 @@
 CC       = g++
-CFLAGS   = -Wall -Wextra -O3 -msse4.2 -mavx2 -g
+CFLAGS   = -Wall -Wextra -O3 -msse4.2 -mavx2 -g -DNDEBUG
 INCLUDES = -Iinclude -Iinclude/ChainTable
 
 OBJ_DIR  = obj
@@ -11,8 +11,8 @@ COMMON_SRCS = src/HashFunctions.cpp src/CommonFunctions.cpp src/Test1.cpp
 COMMON_OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(COMMON_SRCS))
 TEST1_OBJ = $(OBJ_DIR)/Test1.o
 
-SRCS  = src/main.cpp            \
-        src/CommonFunctions.cpp
+SRCS = src/main.cpp            \
+    	src/CommonFunctions.cpp
 
 ifdef POOL
   	CFLAGS += -D_DPOOL
