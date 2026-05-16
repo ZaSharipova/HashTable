@@ -4,19 +4,19 @@
 
 #define MAX_WORD_LEN 32
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <input> <output>\n", argv[0]);
         return 1;
     }
 
-    FILE* in_file = fopen(argv[1], "r");
+    FILE *in_file = fopen(argv[1], "r");
     if (!in_file) {
         perror("Error opening input");
         return 1;
     }
 
-    FILE* out_file = fopen(argv[2], "a");
+    FILE *out_file = fopen(argv[2], "a");
     if (!out_file) {
         perror("Error opening output");
         fclose(in_file);

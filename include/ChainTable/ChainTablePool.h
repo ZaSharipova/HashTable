@@ -5,12 +5,12 @@
 #include "HashFunctions.h"
 
 typedef struct Node {
-    const char* value;
-    struct Node* next;
+    const char *value;
+    struct Node *next;
 } Node;
 
 typedef struct Pool {
-    Node* node_pool;
+    Node *node_pool;
     size_t pool_capacity;
     size_t pool_used;
 } Pool;
@@ -24,11 +24,11 @@ typedef struct HashTable {
     Pool pool;
 } HashTable;
 
-HashTable* CreateTable(size_t capacity, float load_factor);
-void DestroyTable(HashTable* hash_table);
+HashTable *CreateTable(size_t capacity, float load_factor);
+void DestroyTable(HashTable *hash_table);
 
-void Insert(HashTable* hash_table, const char* value, HashFunc hash);
-void Delete(HashTable* hash_table, const char* value, HashFunc hash);
-int Contains(HashTable* hash_table, const char* value, HashFunc hash);
+void Insert(HashTable *hash_table, const char *value, HashFunc hash);
+void Delete(HashTable *hash_table, const char *value, HashFunc hash);
+int Contains(HashTable *hash_table, const char *value, HashFunc hash);
 
 #endif // CHAIN_TABLE_POOL_H

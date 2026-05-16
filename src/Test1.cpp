@@ -6,19 +6,19 @@
 #include <math.h>
 #include <string.h>
 #include <time.h>
-#include <immintrin.h>
+// #include <immintrin.h>
 
 #include "CommonFunctions.h"
 #include "Config.h"
 
-static void SaveCSV(const char* filename, int* buckets);
-static void RunStr(const char* name, char** keys, unsigned int (*fn)(const char *), FILE* timing_file);
-static char** ReadStr(const char* filename);
+static void SaveCSV(const char *filename, int *buckets);
+static void RunStr(const char *name, char** keys, unsigned int (*fn)(const char *), FILE *timing_file);
+static char** ReadStr(const char *filename);
 
 int main(void) {
     system("mkdir -p csv");
 
-    FILE* timing_file = fopen("csv/timing.csv", "w");
+    FILE *timing_file = fopen("csv/timing.csv", "w");
     CHECK_NULL(timing_file, ERROR_FILE, 1);
     fprintf(timing_file, "group,name,time_ms,time_ticks\n");
 
@@ -44,11 +44,11 @@ int main(void) {
     return 0;
 }
 
-static void SaveCSV(const char* filename, int* buckets) {
+static void SaveCSV(const char *filename, int *buckets) {
     assert(filename);
     assert(buckets);
 
-    FILE* file = fopen(filename, "w");
+    FILE *file = fopen(filename, "w");
     CHECK_NULL_VOID(file, ERROR_FILE);
 
     fprintf(file, "bucket,count\n");
@@ -72,8 +72,8 @@ float GetVariance(int *buckets, int n) {
     return var / n;
 }
 
-static void RunFinish(const char* name, const char* prefix, int* buckets, clock_t time_start, clock_t time_end, 
-        unsigned long long time_ticks, FILE* timing_file) {
+static void RunFinish(const char *name, const char *prefix, int *buckets, clock_t time_start, clock_t time_end, 
+        unsigned long long time_ticks, FILE *timing_file) {
     assert(name);
     assert(prefix);
     assert(buckets);
@@ -90,7 +90,7 @@ static void RunFinish(const char* name, const char* prefix, int* buckets, clock_
     SaveCSV(fname, buckets);
 }
 
-static void RunStr(const char* name, char** keys, unsigned int (*fn)(const char *, size_t), FILE* timing_file) {
+static void RunStr(const char *name, char** keys, unsigned int (*fn)(const char *, size_t), FILE *timing_file) {
     assert(name);
     assert(keys);
     assert(fn);
@@ -108,13 +108,13 @@ static void RunStr(const char* name, char** keys, unsigned int (*fn)(const char 
     RunFinish(name, "str", buckets, time_start, time_end, ticks_end - ticks_start, timing_file);
 }
 
-static char** ReadStr(const char* filename) {
+static char** ReadStr(const char *filename) {
     assert(filename);
 
     char** keys = (char **) calloc (N, sizeof(char *));
     CHECK_NULL(keys, ERROR_ARR, NULL);
 
-    FILE* file = fopen(filename, "r");
+    FILE *file = fopen(filename, "r");
     if (!file) {
         perror(ERROR_FILE);
         free(keys);

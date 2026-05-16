@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <immintrin.h>
+// #include <immintrin.h>
 
 #include "Config.h"
 
@@ -16,10 +16,10 @@ double GetTimeInMSec(clock_t start, clock_t end) {
     return (double)(end - start) * 1000.0 / CLOCKS_PER_SEC;
 }
 
-char** ReadString(const char* filename, int number_of_elements) {
+char** ReadString(const char *filename, int number_of_elements) {
     assert(filename);
 
-    FILE* file = fopen(filename, "rb");
+    FILE *file = fopen(filename, "rb");
     if (!file) {
         perror("Error fopen.\n");
         return NULL;
@@ -29,7 +29,7 @@ char** ReadString(const char* filename, int number_of_elements) {
     long file_size = ftell(file);
     rewind(file);
 
-    char* data = (char *) calloc (1, file_size + 1);
+    char *data = (char *) calloc (1, file_size + 1);
     if (!data) {
         fclose(file);
         return NULL;
@@ -50,18 +50,18 @@ char** ReadString(const char* filename, int number_of_elements) {
         return NULL;
     }
 
-    char* merger = (char *) aligned_alloc (32, (size_t)number_of_elements * 32);
+    char *merger = (char *) aligned_alloc (32, (size_t)number_of_elements * 32);
     if (!merger) {
         free(keys);
         free(data);
         return NULL;
     }
 
-    char* cursor = data;
-    char* end = data + file_size;
+    char *cursor = data;
+    char *end = data + file_size;
 
     for (int i = 0; i < number_of_elements && cursor < end; i++) {
-        char* newline = (char*) memchr (cursor, '\n', end - cursor);
+        char *newline = (char*) memchr (cursor, '\n', end - cursor);
         size_t len = newline ? (size_t)(newline - cursor) : (size_t)(end - cursor);
 
         keys[i] = merger + (size_t)i * 32;
@@ -74,7 +74,7 @@ char** ReadString(const char* filename, int number_of_elements) {
     return keys;
 }
 
-// char** ReadString(const char* filename, int number_of_elements) {
+// char** ReadString(const char *filename, int number_of_elements) {
 //     assert(filename);
 
 //     int fd = open(filename, O_RDONLY);
@@ -86,7 +86,7 @@ char** ReadString(const char* filename, int number_of_elements) {
 //     struct stat st = {};
 //     fstat(fd, &st);
 
-//     char* data = (char*) mmap (NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+//     char *data = (char*) mmap (NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 //     close(fd);
 
 //     if (data == MAP_FAILED) {
@@ -102,7 +102,7 @@ char** ReadString(const char* filename, int number_of_elements) {
 //         return NULL;
 //     }
 
-//     char* merger = (char*) aligned_alloc (32, (size_t)number_of_elements * 32);
+//     char *merger = (char*) aligned_alloc (32, (size_t)number_of_elements * 32);
 //     if (!merger) {
 //         free(keys);
 //         munmap(data, st.st_size);
@@ -116,11 +116,11 @@ char** ReadString(const char* filename, int number_of_elements) {
 //     //     _mm256_storeu_si256((__m256i*)(merger) + i, zero);
 //     // }
 
-//     char* cursor = data;
-//     char* end = data + st.st_size;
+//     char *cursor = data;
+//     char *end = data + st.st_size;
 
 //     for (int i = 0; i < number_of_elements && cursor < end; i++) {
-//         char* newline = (char*) memchr (cursor, '\n', end - cursor);
+//         char *newline = (char*) memchr (cursor, '\n', end - cursor);
 //         size_t len = newline ? (size_t)(newline - cursor) : (size_t)(end - cursor);
 
 //         keys[i] = merger + (size_t)i * 32;

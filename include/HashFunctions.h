@@ -15,12 +15,12 @@ unsigned int CountHashFloatBitsBits(float key);
 unsigned int CountHashMantissa(float key);
 unsigned int CountHashExponent(float key);
 unsigned int CountHashMantissaExponent(float key);
-unsigned int CountHashStringSize(const char* string);
-unsigned int CountHashStringSymbols(const char* string);
-unsigned int CountHashStringRolXor(const char* string);
-unsigned int CountHashStringRorXor(const char* string);
-unsigned int CountHashStringPolinomial(const char* string);
-unsigned int CountHashcrc32(const char* string);
-unsigned int CountHashcrc32_Intr(const char* string);
+unsigned int CountHashStringSize(const char *string);
+unsigned int CountHashStringSymbols(const char *string);
+unsigned int CountHashStringRolXor(const char *string);
+unsigned int CountHashStringRorXor(const char *string);
+unsigned int CountHashStringPolinomial(const char *string);
+unsigned int CountHashcrc32(const char *string);
+unsigned int CountHashcrc32_Intr(const char *string);
 
 #endif // HASH_FUNCTIONS_H_

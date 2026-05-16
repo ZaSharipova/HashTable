@@ -7,7 +7,7 @@
 #include "HashFunctions.h"
 #include "CommonFunctions.h"
 
-static void Rehash(HashTable* hash_table, HashFunc Hash) {
+static void Rehash(HashTable *hash_table, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
 
@@ -17,10 +17,10 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
     CHECK_NULL_VOID(new_table, ERROR_ARR);
 
     for (size_t i = 0; i < hash_table->capacity; i++) {
-        Node* cur = hash_table->table[i];
+        Node *cur = hash_table->table[i];
 
         while (cur) {
-            Node* next = cur->next;
+            Node *next = cur->next;
 
             unsigned int new_hash = Hash(cur->value) % new_capacity;
             cur->next = new_table[new_hash];
@@ -34,8 +34,8 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
     hash_table->capacity = new_capacity;
 }
 
-HashTable* CreateTable(size_t capacity, float load_factor) {
-    HashTable* hash_table = (HashTable *) calloc (1, sizeof(HashTable));
+HashTable *CreateTable(size_t capacity, float load_factor) {
+    HashTable *hash_table = (HashTable *) calloc (1, sizeof(HashTable));
     CHECK_NULL(hash_table, ERROR_ARR, NULL);
 
     hash_table->table = (Node **) calloc (capacity, sizeof(Node*));
@@ -52,14 +52,14 @@ HashTable* CreateTable(size_t capacity, float load_factor) {
     return hash_table;
 }
 
-void DestroyTable(HashTable* hash_table) {
+void DestroyTable(HashTable *hash_table) {
     assert(hash_table);
 
     for (size_t i = 0; i < hash_table->capacity; i++) {
-        Node* cur = hash_table->table[i];
+        Node *cur = hash_table->table[i];
 
         while (cur) {
-            Node* next = cur->next;
+            Node *next = cur->next;
             free(cur);
             cur = next;
         }
@@ -69,7 +69,7 @@ void DestroyTable(HashTable* hash_table) {
     free(hash_table);
 }
 
-void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
+void Insert(HashTable *hash_table, const char *value, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
     assert(value);
@@ -79,7 +79,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     }
 
     unsigned int hash = Hash(value) % hash_table->capacity;
-    Node* cur = hash_table->table[hash];
+    Node *cur = hash_table->table[hash];
 
     while (cur) {
         if (strcmp(cur->value, value) == 0) {
@@ -89,7 +89,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
         cur = cur->next;
     }
 
-    Node* node = (Node *) calloc (1, sizeof(Node));
+    Node *node = (Node *) calloc (1, sizeof(Node));
     CHECK_NULL_VOID(node, ERROR_ARR);
 
     node->value = value;
@@ -99,15 +99,15 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     hash_table->size++;
 }
 
-void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
+void Delete(HashTable *hash_table, const char *value, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
     assert(value);
 
     unsigned int hash = Hash(value) % hash_table->capacity;
 
-    Node* cur = hash_table->table[hash];
-    Node* prev = NULL;
+    Node *cur = hash_table->table[hash];
+    Node *prev = NULL;
 
     while (cur) {
         if (cur->value == value) {
@@ -127,13 +127,13 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     }
 }
 
-int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
+int Contains(HashTable *hash_table, const char *value, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
     assert(value);
 
     unsigned int hash = Hash(value) % hash_table->capacity;
-    Node* cur = hash_table->table[hash];
+    Node *cur = hash_table->table[hash];
 
     while (cur) {
         if (strcmp(cur->value, value) == 0)  {

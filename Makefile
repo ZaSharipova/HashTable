@@ -12,16 +12,25 @@ COMMON_OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(COMMON_SRCS))
 TEST1_OBJ = $(OBJ_DIR)/Test1.o
 
 SRCS = src/main.cpp            \
-    	src/CommonFunctions.cpp
+       src/CommonFunctions.cpp \
+	   src/DoGraph.cpp		   \
+       src/DoDump.cpp		   \
+	   src/FileOperations.cpp  \
+	   src/Verify.cpp
 
-ifdef POOL
-  	CFLAGS += -D_DPOOL
-  	SRCS   += src/ChainTable/ChainTablePool.cpp
-else ifdef LIST_TABLE
-  	CFLAGS += -D_DLIST_TABLE
-  	SRCS   += src/ChainTable/ChainTableList.cpp
-else
-  	SRCS   += src/ChainTable/ChainTable.cpp
+# ifdef POOL
+#   	CFLAGS += -D_DPOOL
+#   	SRCS   += src/ChainTable/ChainTablePool.cpp
+# else ifdef LIST_TABLE
+#   	CFLAGS += -D_DLIST_TABLE
+#   	SRCS   += src/ChainTable/ChainTableList.cpp
+# else
+#   	SRCS   += src/ChainTable/ChainTable.cpp
+# endif
+
+SRCS   += src/ChainTable/ChainTableList.cpp
+ifdef VERIFY
+	CFLAGS += -D_DVERIFY
 endif
 
 ifdef CRC_INTR
@@ -48,8 +57,8 @@ ifdef CRC_INTR_STRLEN
 	OBJS += MyStrlen.o
 endif
 
-ifdef SIMD_S
-  OBJS += MyStrcmp.o
+ifdef GEN_FAILURE
+  	CFLAGS += -D_DGEN_FAILURE
 endif
 
 .PHONY: all generate result valg clean temp_start temp_stop

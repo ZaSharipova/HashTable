@@ -5,7 +5,7 @@
 #include <time.h>
 
 double GetTimeInMSec(clock_t start, clock_t end);
-char** ReadString(const char* filename, int number_of_elements);
+char** ReadString(const char *filename, int number_of_elements);
 
 #define CHECK_NULL(ptr, message, ret) \
     if (!(ptr)) {                     \

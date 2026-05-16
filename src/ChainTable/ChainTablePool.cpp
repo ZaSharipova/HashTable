@@ -6,12 +6,12 @@
 
 #include "HashFunctions.h"
 #include "CommonFunctions.h"
-#include <immintrin.h>
+// #include <immintrin.h>
 
 #include "Config.h"
 
 #ifdef _DSIMD
-static inline int simd_strcmp_32(const char* a, const char* b) {
+static inline int simd_strcmp_32(const char *a, const char *b) {
     int mask = 0;
     __asm__ volatile (
         ".intel_syntax noprefix\n"
@@ -29,8 +29,8 @@ static inline int simd_strcmp_32(const char* a, const char* b) {
 }
 #endif
 
-HashTable* CreateTable(size_t capacity, float load_factor) {
-    HashTable* hash_table = (HashTable *) calloc (1, sizeof(HashTable));
+HashTable *CreateTable(size_t capacity, float load_factor) {
+    HashTable *hash_table = (HashTable *) calloc (1, sizeof(HashTable));
     CHECK_NULL(hash_table, ERROR_ARR, NULL);
 
     hash_table->table = (Node **) calloc (capacity, sizeof(Node *));
@@ -57,20 +57,20 @@ HashTable* CreateTable(size_t capacity, float load_factor) {
     return hash_table;
 }
 
-static Node* AllocNode(HashTable* hash_table) {
+static Node *AllocNode(HashTable *hash_table) {
     assert(hash_table);
 
     if (hash_table->pool.pool_used >= hash_table->pool.pool_capacity) {
         size_t new_capacity = hash_table->pool.pool_capacity * 2;
 
-        Node* new_pool = (Node*) realloc (hash_table->pool.node_pool, new_capacity * sizeof(Node));
+        Node *new_pool = (Node*) realloc (hash_table->pool.node_pool, new_capacity * sizeof(Node));
         CHECK_NULL(new_pool, "Error realloc.\n", NULL);
 
         hash_table->pool.node_pool = new_pool;
         hash_table->pool.pool_capacity = new_capacity;
     }
 
-    Node* node = &hash_table->pool.node_pool[hash_table->pool.pool_used++];
+    Node *node = &hash_table->pool.node_pool[hash_table->pool.pool_used++];
     node->next = NULL;
     node->value = NULL;
 
@@ -78,7 +78,7 @@ static Node* AllocNode(HashTable* hash_table) {
 }
 
 
-static void Rehash(HashTable* hash_table, HashFunc Hash) {
+static void Rehash(HashTable *hash_table, HashFunc Hash) {
     assert(hash_table);
     assert(Hash);
 
@@ -88,10 +88,10 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
     CHECK_NULL_VOID(new_table, ERROR_ARR);
 
     for (size_t i = 0; i < hash_table->capacity; i++) {
-        Node* cur = hash_table->table[i];
+        Node *cur = hash_table->table[i];
 
         while (cur) {
-            Node* next = cur->next;
+            Node *next = cur->next;
 
             unsigned int new_hash = Hash(cur->value) % new_capacity;
             cur->next = new_table[new_hash];
@@ -105,7 +105,7 @@ static void Rehash(HashTable* hash_table, HashFunc Hash) {
     hash_table->capacity = new_capacity;
 }
 
-void DestroyTable(HashTable* hash_table) {
+void DestroyTable(HashTable *hash_table) {
     assert(hash_table);
 
     free(hash_table->pool.node_pool);
@@ -113,7 +113,7 @@ void DestroyTable(HashTable* hash_table) {
     free(hash_table);
 }
 
-void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
+void Insert(HashTable *hash_table, const char *value, HashFunc Hash) {
     assert(hash_table);
     assert(value);
     assert(Hash);
@@ -123,7 +123,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     }
 
     unsigned int hash = Hash(value) % hash_table->capacity;
-    Node* cur = hash_table->table[hash];
+    Node *cur = hash_table->table[hash];
 
     while (cur) {
 #ifdef _DSIMD
@@ -138,7 +138,7 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
         cur = cur->next;
     }
 
-    Node* node = (Node *) AllocNode (hash_table);
+    Node *node = (Node *) AllocNode (hash_table);
     CHECK_NULL_VOID(node, ERROR_ARR);
 
     node->value = value;
@@ -148,15 +148,15 @@ void Insert(HashTable* hash_table, const char* value, HashFunc Hash) {
     hash_table->size++;
 }
 
-void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
+void Delete(HashTable *hash_table, const char *value, HashFunc Hash) {
     assert(hash_table);
     assert(value);
     assert(Hash);
 
     unsigned int hash = Hash(value) % hash_table->capacity;
 
-    Node* cur = hash_table->table[hash];
-    Node* prev = NULL;
+    Node *cur = hash_table->table[hash];
+    Node *prev = NULL;
 
     while (cur) {
 #ifdef _DSIMD
@@ -184,13 +184,13 @@ void Delete(HashTable* hash_table, const char* value, HashFunc Hash) {
     }
 }
 
-int Contains(HashTable* hash_table, const char* value, HashFunc Hash) {
+int Contains(HashTable *hash_table, const char *value, HashFunc Hash) {
     assert(hash_table);
     assert(value);
     assert(Hash);
 
     unsigned int hash = Hash(value) % hash_table->capacity;
-    Node* cur = hash_table->table[hash];
+    Node *cur = hash_table->table[hash];
 
     while (cur) {
 #ifdef _DSIMD

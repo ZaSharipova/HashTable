@@ -5,9 +5,9 @@
 #include <assert.h>
 #include <string.h>
 
-#include <immintrin.h>
+// #include <immintrin.h>
 
-unsigned int CountHashcrc32(const char* string, size_t capacity) {
+unsigned int CountHashcrc32(const char *string, size_t capacity) {
     assert(string);
 
     unsigned long long hash = 0xFFFFFFFF;

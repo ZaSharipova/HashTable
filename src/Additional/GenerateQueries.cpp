@@ -14,7 +14,7 @@ int main(void) {
     char** keys = ReadString("data/tests_string.txt", NUMBER_KEYS);
     if (!keys) return 1;
 
-    FILE* file = fopen("data/tests_queries.txt", "w");
+    FILE *file = fopen("data/tests_queries.txt", "w");
     if (!file) {
         perror(ERROR_FILE);
         free(keys);

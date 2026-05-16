@@ -1,98 +1,271 @@
+#!/usr/bin/env python3
+
+import argparse
+import csv
 import os
-import pandas as pd
 import matplotlib.pyplot as plt
-import re
+import matplotlib.ticker as mticker
+import numpy as np
 
-os.makedirs("images", exist_ok = True)
+# ---------------------------------------------------------------------------
+# I/O
+# ---------------------------------------------------------------------------
 
-GROUPS = {
-    "strings": [
-        ("csv/str_length.csv",     "Длина строки"),
-        ("csv/str_symbols.csv",    "Сумма символов"),
-        ("csv/str_polynomial.csv", "Полиномиальный"),
-        ("csv/str_rol+xor.csv",    "Rol + xor"),
-        ("csv/str_ror+xor.csv",    "Ror + xor"),
-        ("csv/str_crc32.csv",      "crc32"),
-    ],
-}
+def read_data(filepath: str):
+    names, times, time_stds, ticks, ticks_stds, instrs = [], [], [], [], [], []
+    with open(filepath, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            names.append(row["name"])
+            times.append(float(row["time_ms"]))
+            time_stds.append(float(row.get("time_std", 0)))
+            ticks.append(int(row["ticks"]))
+            ticks_stds.append(int(row.get("ticks_std", 0)))
+            instrs.append(int(row["instructions"]))
+    return (
+        names,
+        np.array(times),
+        np.array(time_stds),
+        np.array(ticks),
+        np.array(ticks_stds),
+        np.array(instrs),
+    )
 
-for group_name, files in GROUPS.items():
-    n_plots = len(files)
-    fig, axes = plt.subplots(1, n_plots, figsize = (6 * n_plots, 4))
-    if n_plots == 1:
-        axes = [axes]
 
-    variances = []
+def save_fig(fig, path):
+    fig.savefig(path, dpi=180, bbox_inches="tight", pad_inches=0.3)
+    plt.close(fig)
 
-    for ax, (fname, title) in zip(axes, files):
-        if not os.path.exists(fname):
-            print(f"Файл не найден: {fname}")
+
+# ---------------------------------------------------------------------------
+# Label helpers
+# ---------------------------------------------------------------------------
+
+def add_value_labels(ax, bars, values, fmt="{:.2f}", fontsize=8):
+    """Print value above each bar."""
+    for bar, val in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height(),
+            fmt.format(val),
+            ha="center", va="bottom", fontsize=fontsize, fontweight="bold",
+        )
+
+
+def add_delta_annotations(ax, bars, values, fontsize=7,
+                           color_down="#27ae60", color_up="#c0392b"):
+    """Print % change relative to previous bar in the middle of each bar."""
+    for i, (bar, val) in enumerate(zip(bars, values)):
+        if i == 0 or values[i - 1] == 0:
             continue
+        delta = (val - values[i - 1]) / values[i - 1] * 100
+        color = color_down if delta < 0 else color_up
+        sign  = "▼" if delta < 0 else "▲"
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() * 0.5,
+            f"{sign}{abs(delta):.1f}%",
+            ha="center", va="center", fontsize=fontsize,
+            color=color, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.15", facecolor="white",
+                      edgecolor="none", alpha=0.78),
+        )
 
-        df = pd.read_csv(fname)
-        counts = df["count"].values
 
-        var = counts.var()
-        variances.append((title, var))
+# ---------------------------------------------------------------------------
+# Individual plots
+# ---------------------------------------------------------------------------
 
-        colors = ["#DD8452" if c > counts.mean() else "#4C72B0" for c in counts]
-        ax.bar(df["bucket"], counts, color = colors, alpha = 0.85, width = 0.8)
-        ax.set_title(f"{title}\nДисперсия: {var:.1f}", fontsize = 10, fontweight = "bold")
-        ax.set_xlabel("Бакет")
-        ax.set_ylabel("Количество ключей")
-        ax.grid(axis = "y", linestyle = "--", alpha = 0.4)
+def plot_time(ax, x, names, times, time_stds):
+    bars = ax.bar(x, times, yerr=time_stds, capsize=5,
+                  color="#7FB3E0", edgecolor="black", linewidth=0.6,
+                  error_kw=dict(elinewidth=1.2, ecolor="#2471a3", capthick=1.5))
+    add_value_labels(ax, bars, times, fmt="{:.1f}")
+    add_delta_annotations(ax, bars, times)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=30, ha="right")
+    ax.set_ylabel("Время (мс)")
+    ax.set_title("Время выполнения по реализациям")
+    if time_stds.any():
+        ax.annotate("Планки погрешностей: ±σ (стд. отклонение)",
+                    xy=(0.01, 0.97), xycoords="axes fraction",
+                    fontsize=7, color="#555", va="top")
 
-    fig.suptitle(group_name, fontsize = 13, fontweight = "bold")
-    fig.tight_layout()
 
-    out = f"images/collisions_{group_name.replace(' ', '_')}.png"
-    fig.savefig(out, dpi = 150)
-    plt.close(fig)
-    print(f"Saved: {out}")
+def plot_ticks(ax, x, names, ticks, ticks_stds):
+    ticks_b     = ticks / 1e9
+    ticks_std_b = ticks_stds / 1e9
+    bars = ax.bar(x, ticks_b, yerr=ticks_std_b, capsize=5,
+                  color="#F0B27A", edgecolor="black", linewidth=0.6,
+                  error_kw=dict(elinewidth=1.2, ecolor="#b7770d", capthick=1.5))
+    add_value_labels(ax, bars, ticks_b, fmt="{:.2f}")
+    add_delta_annotations(ax, bars, ticks_b)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=30, ha="right")
+    ax.set_ylabel(r"Такты ($\times 10^9$)")
+    ax.set_title("Процессорные такты по реализациям")
+    if ticks_stds.any():
+        ax.annotate("Планки погрешностей: ±σ (стд. отклонение)",
+                    xy=(0.01, 0.97), xycoords="axes fraction",
+                    fontsize=7, color="#555", va="top")
 
-    print(f"\n  {'Функция':<30} {'Дисперсия':>12}")
-    print(f"  {'-'*44}")
-    for name, var in variances:
-        print(f"  {name:<30} {var:>12.1f}")
 
-    print(f"  Идеальная дисперсия (равномерное): 0.0\n")
+def plot_instructions(ax, x, names, instrs):
+    """Instructions come from valgrind Ir — deterministic, no error bars."""
+    instrs_b = instrs / 1e9
+    bars = ax.bar(x, instrs_b,
+                  color="#82E0AA", edgecolor="black", linewidth=0.6)
+    add_value_labels(ax, bars, instrs_b, fmt="{:.2f}")
+    add_delta_annotations(ax, bars, instrs_b)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=30, ha="right")
+    ax.set_ylabel(r"Инструкции ($\times 10^9$)")
+    ax.set_title("Количество инструкций (Ir) по реализациям")
+    ax.annotate("Детерминированный счётчик valgrind — погрешность не применима",
+                xy=(0.01, 0.97), xycoords="axes fraction",
+                fontsize=7, color="#555", va="top")
 
-timing_file = "csv/timing.csv"
-if os.path.exists(timing_file):
-    df_time = pd.read_csv(timing_file)
 
-    group_map = {"str": "strings"}
-    df_time["group"] = df_time["group"].map(group_map)
+def plot_summary(ax, x, names, times, ticks, instrs):
+    width = 0.25
+    t_norm = times  / times.max()
+    k_norm = ticks  / ticks.max()
+    i_norm = instrs / instrs.max()
 
-    subset = df_time[df_time["group"] == "strings"]
+    bars_t = ax.bar(x - width, t_norm, width, label="Время",
+                    color="#7FB3E0", edgecolor="black", linewidth=0.5)
+    bars_k = ax.bar(x,          k_norm, width, label="Такты",
+                    color="#F0B27A", edgecolor="black", linewidth=0.5)
+    bars_i = ax.bar(x + width,  i_norm, width, label="Инструкции",
+                    color="#82E0AA", edgecolor="black", linewidth=0.5)
 
-    import numpy as np
-    x = np.arange(len(subset))
-    width = 0.35
+    for bars, vals in [(bars_t, t_norm), (bars_k, k_norm), (bars_i, i_norm)]:
+        add_value_labels(ax, bars, vals, fmt="{:.2f}", fontsize=7)
+        add_delta_annotations(ax, bars, vals, fontsize=6)
 
-    fig, ax_ms = plt.subplots(figsize = (10, 5))
-    ax_tk = ax_ms.twinx()
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=30, ha="right")
+    ax.set_ylabel("Относительное значение (макс = 1)")
+    ax.set_title("Сравнение реализаций (нормировано)")
+    ax.legend()
 
-    bars_ms = ax_ms.bar(x - width/2, subset["time_ms"].values, width,
-        color = "#4C72B0", alpha = 0.85, label = "Время (мс)")
-    bars_tk = ax_tk.bar(x + width/2, subset["time_ticks"].values, width,
-        color = "#DD8452", alpha = 0.85, label = "Тики (rdtsc)")
 
-    ax_ms.bar_label(bars_ms, fmt = "%.2f", padding = 3, fontsize = 8)
-    ax_tk.bar_label(bars_tk, fmt = "%.2e", padding = 3, fontsize = 8)
+# ---------------------------------------------------------------------------
+# Console report
+# ---------------------------------------------------------------------------
 
-    ax_ms.set_xticks(x)
-    ax_ms.set_xticklabels(subset["name"].values, rotation = 20)
-    ax_ms.set_ylabel("Время (мс)")
-    ax_tk.set_ylabel("Тики (rdtsc)")
-    ax_ms.grid(axis = "y", linestyle = "--", alpha = 0.4)
+def print_report(names, times, time_stds, ticks, ticks_stds, instrs):
+    baseline_idx = next(
+        (i for i, n in enumerate(names) if "-O3" in n or n == "-O3"), 1
+    )
 
-    lines_ms, labels_ms = ax_ms.get_legend_handles_labels()
-    lines_tk, labels_tk = ax_tk.get_legend_handles_labels()
-    ax_ms.legend(lines_ms + lines_tk, labels_ms + labels_tk, loc = "upper left")
+    show_idxs = [i for i, n in enumerate(names)
+                 if i != baseline_idx and "-O0" not in n and n != "-O0"]
 
-    fig.suptitle("Время работы хеш-функций (strings)", fontsize = 13, fontweight = "bold")
-    fig.tight_layout()
-    fig.savefig("images/timing.png", dpi = 150)
-    plt.close(fig)
-    print("Saved: images/timing.png")
+    print(f"\nВыигрыш относительно baseline ({names[baseline_idx]}):")
+    print(f"  {'Реализация':<35} {'Время':>18} {'Такты':>18} {'Инструкции':>18}")
+    print(f"  {'-' * 89}")
+
+    for i in show_idxs:
+        gain_t = (times[baseline_idx]  - times[i])  / times[baseline_idx]  * 100
+        gain_k = (ticks[baseline_idx]  - ticks[i])  / ticks[baseline_idx]  * 100
+        gain_i = (instrs[baseline_idx] - instrs[i]) / instrs[baseline_idx] * 100
+        ratio_t = times[baseline_idx]  / times[i]
+        ratio_k = ticks[baseline_idx]  / ticks[i]
+        ratio_i = instrs[baseline_idx] / instrs[i]
+        print(f"  {names[i]:<35} {gain_t:>+7.2f}% ({ratio_t:.2f}x)"
+              f" {gain_k:>+7.2f}% ({ratio_k:.2f}x)"
+              f" {gain_i:>+7.2f}% ({ratio_i:.2f}x)")
+
+    label_w, col_w = 52, 24
+    all_idxs = [baseline_idx] + show_idxs
+
+    print("\nУскорение относительно предыдущей версии:")
+    header = (f"  {'Переход':<{label_w}} "
+              f"{'Время':>{col_w}} {'Такты':>{col_w}} {'Инструкции':>{col_w}}")
+    print(header)
+    print("  " + "-" * (label_w + 3 * (col_w + 1)))
+
+    for prev, curr in zip(all_idxs[:-1], all_idxs[1:]):
+        gain_t  = (times[prev]  - times[curr])  / times[prev]  * 100
+        gain_k  = (ticks[prev]  - ticks[curr])  / ticks[prev]  * 100
+        gain_i  = (instrs[prev] - instrs[curr]) / instrs[prev] * 100
+        ratio_t = times[prev]  / times[curr]
+        ratio_k = ticks[prev]  / ticks[curr]
+        ratio_i = instrs[prev] / instrs[curr]
+
+        label = f"{names[prev]}  ->  {names[curr]}"
+        if len(label) > label_w:
+            label = label[:label_w - 3] + "..."
+
+        col_t = f"{gain_t:+7.2f}% ({ratio_t:5.2f}x)"
+        col_k = f"{gain_k:+7.2f}% ({ratio_k:5.2f}x)"
+        col_i = f"{gain_i:+7.2f}% ({ratio_i:5.2f}x)"
+        print(f"  {label:<{label_w}} {col_t:>{col_w}} {col_k:>{col_w}} {col_i:>{col_w}}")
+
+    # σ table
+    if time_stds.any():
+        print(f"\n  {'Реализация':<35} {'Время ср., мс':>15} {'±σ мс':>10}"
+              f" {'Такты ср.':>15} {'±σ тактов':>12}")
+        print(f"  {'-' * 87}")
+        for i, name in enumerate(names):
+            print(f"  {name:<35} {times[i]:>15.2f} {time_stds[i]:>10.2f}"
+                  f" {ticks[i]:>15,.0f} {ticks_stds[i]:>12,.0f}")
+
+
+# ---------------------------------------------------------------------------
+# Main orchestrator
+# ---------------------------------------------------------------------------
+
+def plot_all(names, times, time_stds, ticks, ticks_stds, instrs, outdir):
+    os.makedirs(outdir, exist_ok=True)
+    x = np.arange(len(names))
+    W = max(8, len(names) * 1.6)
+
+    plt.rcParams.update({
+        "font.size": 12,
+        "axes.titlesize": 14,
+        "axes.labelsize": 12,
+        "figure.autolayout": False,
+    })
+    plt.style.use("seaborn-v0_8-whitegrid")
+
+    # --- time ---
+    fig, ax = plt.subplots(figsize=(W, 5.5))
+    plot_time(ax, x, names, times, time_stds)
+    save_fig(fig, os.path.join(outdir, "time_ms.png"))
+
+    # --- ticks ---
+    fig, ax = plt.subplots(figsize=(W, 5.5))
+    plot_ticks(ax, x, names, ticks, ticks_stds)
+    save_fig(fig, os.path.join(outdir, "ticks.png"))
+
+    # --- instructions ---
+    fig, ax = plt.subplots(figsize=(W, 5.5))
+    plot_instructions(ax, x, names, instrs)
+    save_fig(fig, os.path.join(outdir, "instructions.png"))
+
+    # --- summary ---
+    fig, ax = plt.subplots(figsize=(W + 1, 5.5))
+    plot_summary(ax, x, names, times, ticks, instrs)
+    save_fig(fig, os.path.join(outdir, "summary.png"))
+
+    print(f"\nГрафики сохранены в {outdir}/")
+    print("  time_ms.png, ticks.png, instructions.png, summary.png")
+
+    print_report(names, times, time_stds, ticks, ticks_stds, instrs)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Визуализация профиля хеш-таблицы")
+    parser.add_argument("csv_file", help="Путь к CSV-файлу с данными")
+    parser.add_argument("-o", "--outdir", default="plots",
+                        help="Папка для графиков (по умолчанию: plots)")
+    args = parser.parse_args()
+
+    names, times, time_stds, ticks, ticks_stds, instrs = read_data(args.csv_file)
+    plot_all(names, times, time_stds, ticks, ticks_stds, instrs, args.outdir)
+
+
+if __name__ == "__main__":
+    main()

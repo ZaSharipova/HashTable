@@ -70,13 +70,13 @@ unsigned int CountHashMantissaExponent(float key) {
     return result;
 }
 
-unsigned int CountHashStringSize(const char* string) {
+unsigned int CountHashStringSize(const char *string) {
     assert(string);
 
     return strlen(string);
 }
 
-unsigned int CountHashStringSymbols(const char* string) {
+unsigned int CountHashStringSymbols(const char *string) {
     assert(string);
 
     int size = strlen(string);
@@ -88,7 +88,7 @@ unsigned int CountHashStringSymbols(const char* string) {
     return result;
 }
 
-unsigned int CountHashStringRolXor(const char* string) {
+unsigned int CountHashStringRolXor(const char *string) {
     assert(string);
     int size = strlen(string);
     if (size == 0) return 0;
@@ -102,7 +102,7 @@ unsigned int CountHashStringRolXor(const char* string) {
     return result;
 }
 
-unsigned int CountHashStringRorXor(const char* string) {
+unsigned int CountHashStringRorXor(const char *string) {
     assert(string);
     int size = strlen(string);
     if (size == 0) return 0;
@@ -116,7 +116,7 @@ unsigned int CountHashStringRorXor(const char* string) {
     return result;
 }
 
-unsigned int CountHashStringPolinomial(const char* string) {
+unsigned int CountHashStringPolinomial(const char *string) {
     assert(string);
 
     int size = strlen(string);
@@ -130,13 +130,13 @@ unsigned int CountHashStringPolinomial(const char* string) {
     return result;
 }
 
-unsigned int CountHashcrc32(const char* string) {
+unsigned int CountHashcrc32(const char *string) {
     assert(string);
 
     return xcrc32((const unsigned char *)string, strlen(string), 0);
 }
 
-unsigned int CountHashcrc32_Intr(const char* string) {
+unsigned int CountHashcrc32_Intr(const char *string) {
     assert(string);
 
     unsigned long long hash = 0xFFFFFFFF;
