@@ -45,6 +45,13 @@ static const char *ListErrorString[] = {
     "Invalid Unused Position Values",
     "Wrong Direction",
     "Failure",
+    "NULL hashtable",
+    "NULL buckets",
+    "Invalid capacity in hashtable",
+    "Invalid load factor in hashtable",
+    "Size mismatch in hashtable",
+    "Wrong bucket",
+    "Bucket corrupt"
 };
 
-#endif //SUBSIDIARY_H_
+#endif // SUBSIDIARY_H_

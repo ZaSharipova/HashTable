@@ -7,15 +7,15 @@
 
 #include "DoDump.h"
 
-void DumpHelperInit(ChangeOperationContext *info, ChainList *initial_list) {
+void DumpHelperInit(ChangeOperationContext *Info, ChainList *initial_list) {
     assert(info);
 
-    INIT_INFO(initial_list);
-    info->hash_table = NULL;
-    info->focus_bucket = -1;
-    
     FILE *file = fopen("log.html", "w");
-    info->file = file;
+    //info->file = file;
+
+    INIT_INFO(initial_list, file);
+    Info->hash_table = NULL;
+    Info->focus_bucket = -1;
 }
 
 void DumpHelperError(ChangeOperationContext *info, HashTable *hash_table, HashFunc Hash,
@@ -34,4 +34,4 @@ void DumpHelperError(ChangeOperationContext *info, HashTable *hash_table, HashFu
     DoAllDumpHashTable(info);
 }
 
-#endif // _DDUMP
+#endif

@@ -16,7 +16,8 @@ SRCS = src/main.cpp            \
 	   src/DoGraph.cpp		   \
        src/DoDump.cpp		   \
 	   src/FileOperations.cpp  \
-	   src/Verify.cpp
+	   src/Verify.cpp		   \
+	   src/DumpHelper.cpp
 
 # ifdef POOL
 #   	CFLAGS += -D_DPOOL

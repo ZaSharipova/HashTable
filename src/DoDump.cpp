@@ -38,20 +38,16 @@ void DoDump(ChangeOperationContext *Info) {
     assert(Info);
 
     unsigned int bit = 1;
-    if (Info->type_of_command_before == kDumpErrors) {
-        fprintf(Info->file, "<h2> <font color=\"red\"> DUMP Listing Error</h2> </font>  \n");
-        fprintf(Info->file, "<h2> <font color = \"red\"> %s</font> </h2> ", Info->message);
-        fprintf(Info->file, "<h3> errors: </h3>");
-        for (unsigned long long i = 0; i < NUMBER_OF_ERRORS; i++) {
-            if (Info->error & bit) {
-                fprintf(Info->file, "<h4> <font color=\"red\"> %s </font> </h4> \n", ListErrorString[i]);
-            }
-            bit <<= 1;
+    fprintf(Info->file, "<h2> <font color=\"red\"> DUMP Listing Error</h2> </font>  \n");
+    fprintf(Info->file, "<h2> <font color = \"red\"> %s</font> </h2> ", Info->message);
+    fprintf(Info->file, "<h3> errors: </h3>");
+    for (unsigned long long i = 0; i < NUMBER_OF_ERRORS; i++) {
+        if (Info->error & bit) {
+            fprintf(Info->file, "<h4> <font color=\"red\"> %s </font> </h4> \n", ListErrorString[i]);
         }
-        fprintf(Info->file, "<br>");
-    } else {
-        fprintf(Info->file, "<h2> DUMP\n");
+        bit <<= 1;
     }
+    fprintf(Info->file, "<br>");
 
     PrintChangeDescription(Info->file, Info);
     fprintf(Info->file, "<h4 style=\"margin: 3px 0;\">%s {%s} </h4>\n", Info->var_name, Info->filename);
@@ -70,7 +66,6 @@ void DoDump(ChangeOperationContext *Info) {
     ChainList *focus_chain = GetFocusedChain(Info);
     Info->list = focus_chain;
 
-    //list integers fill
     if (Info->list && Info->list->data && Info->list->next && Info->list->prev) {
         if (Info->hash_table) {
             fprintf(Info->file, "<h3 style=\"margin: 3px 0;\"> Bucket [%d] </h3>", Info->focus_bucket);

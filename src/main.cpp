@@ -57,10 +57,10 @@ static float MeasureSearch(char** keys, char** queries, int *sink, unsigned long
 int main(void) {
     srand(SEED);
 
-    char** keys = ReadString("data/tests_string.txt", NUMBER_KEYS);
+    char** keys = ReadString("out_small.txt", NUMBER_KEYS);
     if (!keys) return 1;
 
-    char** queries = ReadString("data/tests_queries.txt", NUMBER_QUERIES);
+    char** queries = ReadString("in_small.txt", NUMBER_QUERIES);
     if (!queries) {
         free(keys);
         return 1;
@@ -78,7 +78,15 @@ int main(void) {
     return 0;
 }
 
-static float MeasureSearch(char** keys, char** queries, int *sink, unsigned long long *ticks) {
+static void RunWarmup(HashTable *hash_table, char **queries, HashFunc hashFunc, int *sink);
+static void RunQueryBatch(HashTable *hash_table, char **queries, HashFunc hashFunc,
+        int *sink, unsigned long long *out_ticks, double *out_time);
+static void ComputeStats(unsigned long long *tick_runs, double *time_runs, int runs, double *out_ticks_mean,
+        double *out_ticks_sigma, double *out_time_mean,  double *out_time_sigma);
+static void WriteRawCSV(unsigned long long *tick_runs, double *time_runs, int runs);
+static void PrintStats(double time_mean, double time_sigma, double ticks_mean, double ticks_sigma);
+
+static float MeasureSearch(char **keys, char **queries, int *sink, unsigned long long *ticks) {
     assert(keys);
     assert(queries);
     assert(sink);
@@ -108,76 +116,136 @@ static float MeasureSearch(char** keys, char** queries, int *sink, unsigned long
 #else
         (void)err;
 #endif
-
     }
 
     const int RUNS = 20;
     unsigned long long tick_runs[RUNS] = {};
     double time_runs[RUNS] = {};
-    int answer = 0;
 
-    for (int run = 0; run < RUNS + 1; run++) {
-        unsigned long long ticks_start = __rdtsc();
-        clock_t time_start = clock();
+    RunWarmup(hash_table, queries, hashFunc, sink);
 
-        for (int i = 0; i < NUMBER_QUERIES; i++) {
-            ListErrors err = Contains(hash_table, queries[i], hashFunc, &answer);
+    for (int run = 0; run < RUNS; run++) {
+        RunQueryBatch(hash_table, queries, hashFunc, sink, &tick_runs[run], &time_runs[run]);
 #ifdef _DVERIFY
-            if (err != kSuccess) {
-                DUMP_HELPER_ON_ERROR(Info, hash_table, hashFunc, queries[i], i, err, "Contains");
-                DestroyTable(hash_table);
-                return -1;
-            }
-#else
-            (void)err;
-#endif
-        
-            *sink += answer;
+        if (time_runs[run] < 0) {
+            DestroyTable(hash_table);
+            return -1;
         }
-
-        clock_t time_end = clock();
-        unsigned long long ticks_end = __rdtsc();
-
-        if (run == 0) continue;
-        tick_runs[run - 1] = ticks_end - ticks_start;
-        time_runs[run - 1] = GetTimeInMSec(time_start, time_end);
+#endif
     }
 
-    unsigned long long ticks_total = 0;
-    double time_total = 0;
-    for (int i = 0; i < RUNS; i++) {
-        ticks_total += tick_runs[i];
-        time_total += time_runs[i];
-    }
-    double ticks_mean = (double)ticks_total / RUNS;
-    double time_mean = time_total / RUNS;
-
-    double ticks_var = 0, time_var = 0;
-    for (int i = 0; i < RUNS; i++) {
-        ticks_var += ((double)tick_runs[i] - ticks_mean) * ((double)tick_runs[i] - ticks_mean);
-        time_var += (time_runs[i] - time_mean) * (time_runs[i] - time_mean);
-    }
-    ticks_var /= (RUNS - 1);
-    time_var /= (RUNS - 1);
-
-    double ticks_sigma = sqrt(ticks_var);
-    double time_sigma  = sqrt(time_var);
+    double ticks_mean = 0.0, ticks_sigma = 0.0, time_mean = 0.0, time_sigma = 0.0;
+    ComputeStats(tick_runs, time_runs, RUNS, &ticks_mean, &ticks_sigma, &time_mean, &time_sigma);
 
     *ticks = (unsigned long long)ticks_mean;
 
-    FILE *f = fopen("csv/timing_raw.csv", "a");
-    if (f) {
-        for (int i = 0; i < RUNS; i++) {
-            fprintf(f, "%s,%llu,%.4f\n", HASH_NAME, tick_runs[i], time_runs[i]);
-        }
-        fclose(f);
-    }
-
-    printf("time:  %.4f ± %.4f ms\n", time_mean, time_sigma);
-    printf("ticks: %.0f ± %.0f\n", ticks_mean, ticks_sigma);
-    printf("95%% CI time:  [%.4f, %.4f] ms\n",
-        time_mean - 2*time_sigma, time_mean + 2*time_sigma);
+    WriteRawCSV(tick_runs, time_runs, RUNS);
+    PrintStats(time_mean, time_sigma, ticks_mean, ticks_sigma);
 
     DestroyTable(hash_table);
+#ifdef _DVERIFY
+    fclose(Info.file);
+#endif
     return (float)time_mean;
+}
+
+static void RunWarmup(HashTable *hash_table, char **queries, HashFunc hashFunc, int *sink) {
+    assert(hash_table);
+    assert(queries);
+    assert(sink);
+
+    int answer = 0;
+    for (int i = 0; i < NUMBER_QUERIES; i++) {
+        ListErrors err = Contains(hash_table, queries[i], hashFunc, &answer);
+        (void)err;
+        *sink += answer;
+    }
+}
+
+static void RunQueryBatch(HashTable *hash_table, char **queries, HashFunc hashFunc,
+        int *sink, unsigned long long *out_ticks, double *out_time) {
+    assert(hash_table);
+    assert(queries);
+    assert(sink);
+    assert(out_ticks);
+    assert(out_time);
+    int answer = 0;
+
+    unsigned long long ticks_start = __rdtsc();
+    clock_t time_start = clock();
+
+    for (int i = 0; i < NUMBER_QUERIES; i++) {
+        ListErrors err = Contains(hash_table, queries[i], hashFunc, &answer);
+#ifdef _DVERIFY
+        if (err != kSuccess) {
+            *out_ticks = 0;
+            *out_time  = -1.0;
+            return;
+        }
+#else
+        (void)err;
+#endif
+        *sink += answer;
+    }
+
+    clock_t time_end = clock();
+    unsigned long long ticks_end = __rdtsc();
+
+    *out_ticks = ticks_end - ticks_start;
+    *out_time  = GetTimeInMSec(time_start, time_end);
+}
+
+static void ComputeStats(unsigned long long *tick_runs, double *time_runs, int runs, double *out_ticks_mean,
+        double *out_ticks_sigma, double *out_time_mean,  double *out_time_sigma) {
+    assert(tick_runs);
+    assert(time_runs);
+    assert(out_time_mean);
+    assert(out_ticks_sigma);
+    assert(out_time_mean);
+    assert(out_time_sigma);
+
+    unsigned long long ticks_total = 0;
+    double time_total = 0;
+    for (int i = 0; i < runs; i++) {
+        ticks_total += tick_runs[i];
+        time_total += time_runs[i];
+    }
+
+    *out_ticks_mean = (double)ticks_total / runs;
+    *out_time_mean = time_total / runs;
+
+    double ticks_var = 0, time_var = 0;
+    for (int i = 0; i < runs; i++) {
+        double diff_ticks = (double)tick_runs[i] - *out_ticks_mean;
+        double diff_mean = time_runs[i] - *out_time_mean;
+
+        ticks_var += diff_ticks * diff_ticks;
+        time_var += diff_mean * diff_mean;
+    }
+
+    *out_ticks_sigma = sqrt(ticks_var / (runs - 1));
+    *out_time_sigma = sqrt(time_var / (runs - 1));
+}
+
+static void WriteRawCSV(unsigned long long *tick_runs, double *time_runs, int runs) {
+    assert(time_runs);
+    assert(time_runs);
+
+    FILE *timing_file = fopen("csv/timing_raw.csv", "a");
+    if (!timing_file) {
+        perror("Error opening timing file.\n");
+        return;
+    }
+
+    for (int i = 0; i < runs; i++) {
+        fprintf(timing_file, "%s,%llu,%.4f\n", HASH_NAME, tick_runs[i], time_runs[i]);
+    }
+
+    fclose(timing_file);
+}
+
+static void PrintStats(double time_mean, double time_sigma, double ticks_mean, double ticks_sigma) {
+    printf("time:  %.4f ± %.4f ms\n", time_mean, time_sigma);
+    printf("ticks: %.0f ± %.0f\n", ticks_mean, ticks_sigma);
+    printf("95%% CI time:  [%.4f, %.4f] ms\n", time_mean - 2 * time_sigma, time_mean + 2 * time_sigma);
 }

@@ -5,7 +5,7 @@
 #include "Verify.h"
 #include "HashFunctions.h"
 
-#ifdef _DDUMP
+#ifdef _DVERIFY
 #include "DoDump.h"
 
 void DumpHelperInit (ChangeOperationContext *info, ChainList *initial_list);

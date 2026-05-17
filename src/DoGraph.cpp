@@ -13,12 +13,9 @@
 
 static void PrintGraphHeader(FILE *file);
 static FillAndBorderColor GetFillColors(ChangeOperationContext *Info, int pos);
-
 static void PrintNodes(ChangeOperationContext *Info, FILE *file, int bucket_id);
 static void PrintInvisibleEdges(ChangeOperationContext *Info, FILE *file, int bucket_id);
-
 static void FillFree(ChangeOperationContext *Info, FILE *file, int bucket_id);
-
 static void PrintEdges(ChangeOperationContext *Info, FILE *file, int bucket_id);
 
 ListErrors DumpListToGraphviz(ChangeOperationContext *Info) {
@@ -58,16 +55,16 @@ ListErrors DumpHashTableToGraphviz(HashTable *hash_table, ChangeOperationContext
     int capacity = (int)hash_table->capacity;
     int focus = Info->focus_bucket;
 
-    int lo = 0;
-    int hi = 0;
+    int low = 0;
+    int high = 0;
     if (focus < 0 || focus >= capacity) {
-        lo = 0;
-        hi = (capacity < 2 * DUMP_BUCKET_RADIUS + 1) ? capacity - 1 : 2 * DUMP_BUCKET_RADIUS;
+        low = 0;
+        high = (capacity < 2 * DUMP_BUCKET_RADIUS + 1) ? capacity - 1 : 2 * DUMP_BUCKET_RADIUS;
     } else {
-        lo = focus - DUMP_BUCKET_RADIUS;
-        hi = focus + DUMP_BUCKET_RADIUS;
-        if (lo < 0) lo = 0;
-        if (hi >= capacity) hi = capacity - 1;
+        low = focus - DUMP_BUCKET_RADIUS;
+        high = focus + DUMP_BUCKET_RADIUS;
+        if (low < 0) low = 0;
+        if (high >= capacity) high = capacity - 1;
     }
 
     fprintf(file, "digraph HashTable {\n");
@@ -78,31 +75,33 @@ ListErrors DumpHashTableToGraphviz(HashTable *hash_table, ChangeOperationContext
     fprintf(file, "    compound=true;\n");
     fprintf(file, "    labelloc=\"t\";\n");
     fprintf(file, "    label=\"capacity=%zu  size=%zu  focus=%d  window=[%d..%d]\";\n\n",
-            hash_table->capacity, hash_table->size, focus, lo, hi);
+        hash_table->capacity, hash_table->size, focus, low, high);
 
     fprintf(file, "    table [shape=record, style=filled, fillcolor=\"#F5F5DC\", label=\"");
 
     int first = 1;
-    if (lo > 0) {
-        fprintf(file, "<lo> ... %d skipped ...", lo);
+    if (low > 0) {
+        fprintf(file, "<low> ... %d skipped ...", low);
         first = 0;
     }
-    for (int i = lo; i <= hi; i++) {
+
+    for (int i = low; i <= high; i++) {
         if (!first) fprintf(file, " | ");
         first = 0;
 
-        const char *highlight = (i == focus) ? "  <-- focus" : "";
-        fprintf(file, "<b%d> [%d]\\nn=%d%s",
-                i, i, hash_table->buckets[i].number_of_elem, highlight);
+        const char *highlight = (i == focus) ? " (focus)" : "";
+
+        fprintf(file, "<b%d> [%d] n=%d%s",
+            i, i, hash_table->buckets[i].number_of_elem, highlight);
     }
-    if (hi < capacity - 1) {
-        fprintf(file, " | <hi> ... %d skipped ...", capacity - 1 - hi);
+
+    if (high < capacity - 1) {
+        fprintf(file, " | <high> ... %d skipped ...", capacity - 1 - high);
     }
     fprintf(file, "\"];\n\n");
 
     ChainList *saved = Info->list;
-
-    for (int i = lo; i <= hi; i++) {
+    for (int i = low; i <= high; i++) {
         ChainList *chain = &hash_table->buckets[i];
         if (chain->number_of_elem == 0) continue;
 
@@ -111,7 +110,7 @@ ListErrors DumpHashTableToGraphviz(HashTable *hash_table, ChangeOperationContext
 
         fprintf(file, "    subgraph cluster_b%d {\n", i);
         fprintf(file, "        label = \"bucket %d%s\";\n",
-                i, (i == focus) ? " (focus)" : "");
+            i, (i == focus) ? " (focus)" : "");
         fprintf(file, "        style    = \"rounded\";\n");
         fprintf(file, "        color    = \"%s\";\n", cluster_color);
         fprintf(file, "        penwidth = %s;\n", cluster_pen);
@@ -126,15 +125,13 @@ ListErrors DumpHashTableToGraphviz(HashTable *hash_table, ChangeOperationContext
 
         int head = chain->next[0];
         fprintf(file, "    table:b%d -> node_b%d_%d [lhead=cluster_b%d, style=dashed, color=\"%s\"];\n\n",
-                i, i, head, i, cluster_color);
+            i, i, head, i, cluster_color);
     }
 
     Info->list = saved;
-
     fprintf(file, "}\n");
 
     printf("Graphviz dump saved to %s\n", FILE_FOR_GRAPH_TEXT);
-
     return CloseFile(file);
 }
 
@@ -179,6 +176,7 @@ static void PrintEdges(ChangeOperationContext *Info, FILE *file, int bucket_id) 
                 }
             }
         }
+
         else {
             if (Info->list->data[i] == HT_POISON && i != 0) {
                 if (next > 0 && next < size) {
@@ -261,7 +259,7 @@ static void PrintNodes(ChangeOperationContext *Info, FILE *file, int bucket_id) 
         const char *data_label = "data";
 #endif
         fprintf(file, "    node_b%d_%d [label=\"idx: %d | %s: " LIST_SPEC " | next: %d | prev: %d\"; shape=Mrecord; style=filled; ",
-                bucket_id, i, i, data_label, Info->list->data[i], Info->list->next[i], Info->list->prev[i]);
+            bucket_id, i, i, data_label, Info->list->data[i], Info->list->next[i], Info->list->prev[i]);
 
         fprintf(file, "fillcolor = \"%s\"; color = \"%s\"];\n", colors.fillColor, colors.borderColor);
     }
