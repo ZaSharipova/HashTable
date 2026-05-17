@@ -57,10 +57,10 @@ static float MeasureSearch(char** keys, char** queries, int *sink, unsigned long
 int main(void) {
     srand(SEED);
 
-    char** keys = ReadString("out.txt", NUMBER_KEYS);
+    char** keys = ReadString("data/tests_string.txt", NUMBER_KEYS);
     if (!keys) return 1;
 
-    char** queries = ReadString("in.txt", NUMBER_QUERIES);
+    char** queries = ReadString("data/tests_queries.txt", NUMBER_QUERIES);
     if (!queries) {
         free(keys);
         return 1;
@@ -108,6 +108,7 @@ static float MeasureSearch(char** keys, char** queries, int *sink, unsigned long
 #else
         (void)err;
 #endif
+
     }
 
     const int RUNS = 20;
@@ -172,8 +173,8 @@ static float MeasureSearch(char** keys, char** queries, int *sink, unsigned long
         fclose(f);
     }
 
-    printf("time:  %.4f ± %.4f ms  (σ)\n", time_mean, time_sigma);
-    printf("ticks: %.0f ± %.0f     (σ)\n", ticks_mean, ticks_sigma);
+    printf("time:  %.4f ± %.4f ms\n", time_mean, time_sigma);
+    printf("ticks: %.0f ± %.0f\n", ticks_mean, ticks_sigma);
     printf("95%% CI time:  [%.4f, %.4f] ms\n",
         time_mean - 2*time_sigma, time_mean + 2*time_sigma);
 

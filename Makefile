@@ -5,7 +5,7 @@ INCLUDES = -Iinclude -Iinclude/ChainTable
 OBJ_DIR  = obj
 BIN_DIR  = bin
 GEN_DIR  = data
-USE_DIR  = callgrind_list
+USE_DIR  = callgrind_new
 
 COMMON_SRCS = src/HashFunctions.cpp src/CommonFunctions.cpp src/Test1.cpp
 COMMON_OBJS = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(COMMON_SRCS))
